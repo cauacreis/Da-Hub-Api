@@ -1,49 +1,37 @@
-package com.dahub.domain.entity;
+package com.dahub.application.dto;
 
 import com.dahub.domain.entity.enums.Role;
-import jakarta.persistence.*;
-import java.util.Objects;
-import java.util.UUID;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-@Entity
-@Table(name = "tb_users")
-public class User {
+public class UserRegistrationDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, updatable = false)
-    private UUID id;
-
-    @Column(nullable = false)
+    @NotBlank(message = "O nome é obrigatório")
     private String name;
 
-    @Column(nullable = false, unique = true)
+    @NotBlank(message = "O e-mail é obrigatório")
+    @Email(message = "O e-mail deve ser válido")
     private String email;
 
-    @Column(name = "registration_number", nullable = false, unique = true)
+    @NotBlank(message = "A matrícula é obrigatória")
     private String registrationNumber;
 
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    @Column(nullable = false)
+    @NotBlank(message = "A senha é obrigatória")
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @NotNull(message = "O perfil (role) é obrigatório")
     private Role role;
 
-    public User() {}
+    public UserRegistrationDTO() {}
 
-    public User(UUID id, String name, String email, String registrationNumber, String password, Role role) {
-        this.id = id;
+    public UserRegistrationDTO(String name, String email, String registrationNumber, String password, Role role) {
         this.name = name;
         this.email = email;
         this.registrationNumber = registrationNumber;
         this.password = password;
         this.role = role;
     }
-
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -60,40 +48,25 @@ public class User {
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(id, user.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(id);
-    }
-
     public static Builder builder() {
         return new Builder();
     }
 
     public static class Builder {
-        private UUID id;
         private String name;
         private String email;
         private String registrationNumber;
         private String password;
         private Role role;
 
-        public Builder id(UUID id) { this.id = id; return this; }
         public Builder name(String name) { this.name = name; return this; }
         public Builder email(String email) { this.email = email; return this; }
         public Builder registrationNumber(String registrationNumber) { this.registrationNumber = registrationNumber; return this; }
         public Builder password(String password) { this.password = password; return this; }
         public Builder role(Role role) { this.role = role; return this; }
 
-        public User build() {
-            return new User(id, name, email, registrationNumber, password, role);
+        public UserRegistrationDTO build() {
+            return new UserRegistrationDTO(name, email, registrationNumber, password, role);
         }
     }
 }
