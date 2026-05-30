@@ -1,3 +1,7 @@
+jwt:
+  secret: aVeryLongSecretKeyThatNeedsToBeAtLeast32BytesLongToWorkWithJjwt
+  expiration: 7200000
+
 spring:
   application:
     name: da-hub-api
