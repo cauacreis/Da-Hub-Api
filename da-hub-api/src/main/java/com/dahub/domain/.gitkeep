@@ -1,0 +1,17 @@
+package com.dahub.domain;
+
+/**
+ * Camada de Domínio — DA Hub
+ *
+ * Contém as entidades de negócio, value objects, interfaces de repositórios
+ * e serviços de domínio. Esta camada é completamente independente de frameworks.
+ *
+ * Subpacotes:
+ * - domain.entity   → Entidades JPA (ex: User, Company, Contract)
+ * - domain.valueobject → Value Objects imutáveis
+ * - domain.repository  → Interfaces dos repositórios (contratos)
+ * - domain.service     → Serviços de domínio puro
+ */
+public final class package-info {
+    private package-info() {}
+}

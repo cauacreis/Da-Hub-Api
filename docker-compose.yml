@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  dahub-postgres:
+    image: postgres:15-alpine
+    container_name: dahub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dahub
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - dahub_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dahub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  dahub_pgdata:
+    name: dahub_pgdata
