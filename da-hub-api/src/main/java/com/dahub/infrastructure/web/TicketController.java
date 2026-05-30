@@ -42,4 +42,18 @@ public class TicketController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
+    @PostMapping("/scan/{qrCodeHash}")
+    @PreAuthorize("hasAnyRole('DIRECTOR', 'VP')")
+    public ResponseEntity<?> scanTicket(@PathVariable String qrCodeHash) {
+        try {
+            TicketResponseDTO ticketResponse = ticketService.scanTicket(qrCodeHash);
+            return ResponseEntity.ok(ticketResponse);
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("Ticket not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
 }

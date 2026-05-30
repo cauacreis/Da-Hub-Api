@@ -58,4 +58,32 @@ public class TicketService {
 
         return responseDTO;
     }
+
+    public TicketResponseDTO scanTicket(String qrCodeHash) {
+        Ticket ticket = ticketRepository.findByQrCodeHash(qrCodeHash)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        if (ticket.getStatus() == TicketStatus.USED) {
+            throw new RuntimeException("Ticket already used");
+        }
+
+        if (ticket.getStatus() == TicketStatus.CANCELLED) {
+            throw new RuntimeException("Ticket cancelled");
+        }
+
+        if (ticket.getStatus() == TicketStatus.PAID) {
+            ticket.setStatus(TicketStatus.USED);
+        }
+
+        ticket = ticketRepository.save(ticket);
+
+        TicketResponseDTO responseDTO = new TicketResponseDTO();
+        responseDTO.setTicketId(ticket.getId());
+        responseDTO.setEventTitle(ticket.getEvent().getTitle());
+        responseDTO.setUserName(ticket.getUser().getName());
+        responseDTO.setQrCodeHash(ticket.getQrCodeHash());
+        responseDTO.setStatus(ticket.getStatus());
+
+        return responseDTO;
+    }
 }
