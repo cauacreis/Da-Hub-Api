@@ -3,7 +3,7 @@ spring:
     name: da-hub-api
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/dahub
+    url: jdbc:postgresql://localhost:5433/dahub
     username: "postgres"
     password: "admin"
     driver-class-name: org.postgresql.Driver
