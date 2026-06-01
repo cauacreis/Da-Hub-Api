@@ -85,13 +85,21 @@ export function Dashboard() {
           <LayoutDashboard className="w-8 h-8 text-zinc-50" />
           <h1 className="text-2xl font-bold uppercase text-zinc-50 tracking-tighter">Painel da Diretoria</h1>
         </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 bg-red-500 text-zinc-50 border-4 border-red-700 font-bold uppercase py-2 px-4 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none"
-        >
-          <LogOut className="w-5 h-5" />
-          Sair
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/scanner')}
+            className="text-zinc-400 hover:text-zinc-50 font-bold uppercase text-xs tracking-widest transition-colors flex items-center gap-1"
+          >
+            Modo Catraca
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 bg-red-500 text-zinc-50 border-4 border-red-700 font-bold uppercase py-2 px-4 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none"
+          >
+            <LogOut className="w-5 h-5" />
+            Sair
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 flex flex-col gap-6">
