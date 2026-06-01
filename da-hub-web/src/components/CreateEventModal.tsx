@@ -51,7 +51,21 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
       }, 1500);
 
     } catch (err: any) {
-      setError(err.response?.data?.message || err.response?.data || 'Erro ao criar evento. Verifique os dados ou seu nível de acesso.');
+      if (err.response?.status === 403) {
+        setError('Acesso Negado: Apenas a Diretoria pode criar eventos.');
+      } else if (err.response?.status === 400) {
+        // Spring validation error format
+        const data = err.response.data;
+        if (data.errors && data.errors.length > 0) {
+          setError(`Erro de validação: ${data.errors[0].defaultMessage || 'Verifique os dados informados.'}`);
+        } else if (data.message) {
+          setError(`Erro: ${data.message}`);
+        } else {
+          setError('Erro de validação. Verifique os dados informados.');
+        }
+      } else {
+        setError(err.response?.data?.message || err.response?.data || 'Erro ao conectar com o servidor.');
+      }
     } finally {
       setIsLoading(false);
     }
