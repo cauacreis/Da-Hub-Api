@@ -1,30 +1,31 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ScanLine, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, ScanLine, CheckCircle2, XCircle, Camera, Keyboard } from 'lucide-react';
 import { api } from '../services/api';
+import { Scanner as QrScanner } from '@yudiel/react-qr-scanner';
 
 export function Scanner() {
   const navigate = useNavigate();
+  const [scanMode, setScanMode] = useState<'camera' | 'manual'>('camera');
   const [qrCodeHash, setQrCodeHash] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Keep focus on input for fast scanning
-    if (status === 'idle') {
+    // Keep focus on input for fast scanning in manual mode
+    if (status === 'idle' && scanMode === 'manual') {
       inputRef.current?.focus();
     }
-  }, [status]);
+  }, [status, scanMode]);
 
-  const handleScan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!qrCodeHash.trim()) return;
+  const submitHash = async (hash: string) => {
+    if (!hash.trim()) return;
 
     setStatus('loading');
 
     try {
-      await api.post(`/tickets/scan/${qrCodeHash.trim()}`);
+      await api.post(`/tickets/scan/${hash.trim()}`);
       setStatus('success');
       
       setTimeout(() => {
@@ -44,6 +45,19 @@ export function Scanner() {
     }
   };
 
+  const handleManualScan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitHash(qrCodeHash);
+  };
+
+  const handleCameraScan = (detectedCodes: { rawValue: string }[]) => {
+    if (detectedCodes.length > 0 && status === 'idle') {
+      const hash = detectedCodes[0].rawValue;
+      setQrCodeHash(hash);
+      submitHash(hash);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col relative">
       <header className="flex justify-between items-center p-6 bg-zinc-900 border-b-4 border-zinc-50 shadow-neo z-10">
@@ -60,8 +74,25 @@ export function Scanner() {
         </button>
       </header>
 
-      <main className="flex-1 flex flex-col justify-center items-center p-6 gap-8 relative overflow-hidden">
+      <main className="flex-1 flex flex-col items-center p-6 gap-6 relative overflow-hidden">
         
+        {/* Toggle Mode Button */}
+        <button
+          onClick={() => setScanMode(scanMode === 'camera' ? 'manual' : 'camera')}
+          className="bg-zinc-800 text-zinc-50 border-4 border-zinc-50 font-bold uppercase py-3 px-6 hover:bg-zinc-700 transition-colors flex items-center justify-center gap-2 z-10 shadow-neo active:translate-y-1 active:translate-x-1 active:shadow-none w-full max-w-3xl"
+        >
+          {scanMode === 'camera' ? (
+            <>
+              <Keyboard className="w-5 h-5" />
+              Alternar para Digitação Manual
+            </>
+          ) : (
+            <>
+              <Camera className="w-5 h-5" />
+              Alternar para Câmera
+            </>
+          )}
+        </button>
         {/* Feedback Massivo Ocupando a Área Central */}
         {status === 'success' && (
           <div className="absolute inset-0 z-20 bg-green-500 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-200">
@@ -86,29 +117,48 @@ export function Scanner() {
           </div>
         )}
 
-        {/* Input Gigante */}
-        <form onSubmit={handleScan} className="w-full max-w-3xl flex flex-col gap-6 z-10">
-          <label className="text-zinc-50 font-bold uppercase tracking-widest text-xl text-center">
-            Aguardando Leitura...
-          </label>
-          <input
-            ref={inputRef}
-            type="text"
-            value={qrCodeHash}
-            onChange={(e) => setQrCodeHash(e.target.value)}
-            disabled={status !== 'idle'}
-            placeholder="COLE OU ESCANEIE O HASH AQUI"
-            className="w-full bg-zinc-900 border-8 border-zinc-50 text-zinc-50 p-8 md:p-12 text-3xl md:text-5xl font-mono font-black text-center outline-none focus:shadow-[16px_16px_0px_0px_rgba(255,255,255,0.9)] transition-all placeholder:text-zinc-700 disabled:opacity-50"
-            autoFocus
-          />
-          <button
-            type="submit"
-            disabled={status !== 'idle' || !qrCodeHash.trim()}
-            className="w-full bg-zinc-50 text-zinc-950 border-8 border-zinc-950 font-black uppercase py-8 md:py-10 text-3xl md:text-5xl hover:bg-yellow-400 transition-colors shadow-[12px_12px_0px_0px_rgba(255,255,255,0.9)] active:translate-y-2 active:translate-x-2 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {status === 'loading' ? 'Verificando...' : 'Validar Ingresso'}
-          </button>
-        </form>
+        {/* Scanner Área */}
+        <div className="w-full max-w-3xl flex-1 flex flex-col justify-center items-center gap-6 z-10">
+          {scanMode === 'manual' ? (
+            <form onSubmit={handleManualScan} className="w-full flex flex-col gap-6">
+              <label className="text-zinc-50 font-bold uppercase tracking-widest text-xl text-center">
+                Aguardando Leitura...
+              </label>
+              <input
+                ref={inputRef}
+                type="text"
+                value={qrCodeHash}
+                onChange={(e) => setQrCodeHash(e.target.value)}
+                disabled={status !== 'idle'}
+                placeholder="COLE OU ESCANEIE O HASH AQUI"
+                className="w-full bg-zinc-900 border-8 border-zinc-50 text-zinc-50 p-8 md:p-12 text-3xl md:text-5xl font-mono font-black text-center outline-none focus:shadow-[16px_16px_0px_0px_rgba(255,255,255,0.9)] transition-all placeholder:text-zinc-700 disabled:opacity-50"
+                autoFocus
+              />
+              <button
+                type="submit"
+                disabled={status !== 'idle' || !qrCodeHash.trim()}
+                className="w-full bg-zinc-50 text-zinc-950 border-8 border-zinc-950 font-black uppercase py-8 md:py-10 text-3xl md:text-5xl hover:bg-yellow-400 transition-colors shadow-[12px_12px_0px_0px_rgba(255,255,255,0.9)] active:translate-y-2 active:translate-x-2 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {status === 'loading' ? 'Verificando...' : 'Validar Ingresso'}
+              </button>
+            </form>
+          ) : (
+            <div className="w-full max-w-2xl border-8 border-zinc-50 shadow-[16px_16px_0px_0px_rgba(255,255,255,0.9)] bg-zinc-900 aspect-square flex flex-col justify-center items-center p-2 relative overflow-hidden">
+              <label className="text-zinc-50 font-bold uppercase tracking-widest text-lg text-center absolute top-4 z-20 bg-zinc-950/80 px-4 py-2 border-2 border-zinc-50">
+                Aponte o Ingresso para a Câmera
+              </label>
+              <div className="w-full h-full relative">
+                <QrScanner
+                  onScan={handleCameraScan}
+                  paused={status !== 'idle'}
+                  onError={(error) => {
+                    console.log('Erro de câmera', error);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
