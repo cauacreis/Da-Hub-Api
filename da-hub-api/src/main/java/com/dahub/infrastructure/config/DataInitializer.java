@@ -26,7 +26,7 @@ public class DataInitializer implements CommandLineRunner {
             diretor.setEmail("diretoria@dahub.dev");
             diretor.setPassword(passwordEncoder.encode("admin"));
             diretor.setRegistrationNumber("00000");
-            diretor.setRole("VP");
+            diretor.setRole(com.dahub.domain.entity.enums.Role.VP);
             userRepository.save(diretor);
 
             // Cria um usuário Aluno Padrão (STUDENT)
@@ -35,7 +35,7 @@ public class DataInitializer implements CommandLineRunner {
             aluno.setEmail("aluno@dahub.dev");
             aluno.setPassword(passwordEncoder.encode("123"));
             aluno.setRegistrationNumber("55555");
-            aluno.setRole("STUDENT");
+            aluno.setRole(com.dahub.domain.entity.enums.Role.STUDENT);
             userRepository.save(aluno);
 
             System.out.println("====== USUÁRIOS DE TESTE CRIADOS ======");

@@ -7,8 +7,11 @@ import java.util.UUID;
 public class TicketResponseDTO {
 
     private UUID ticketId;
+    private UUID eventId;
     private String eventTitle;
     private String userName;
+    private String userRegistrationNumber;
+    private String userEmail;
     private String qrCodeHash;
     private TicketStatus status;
 
@@ -21,6 +24,14 @@ public class TicketResponseDTO {
 
     public void setTicketId(UUID ticketId) {
         this.ticketId = ticketId;
+    }
+
+    public UUID getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(UUID eventId) {
+        this.eventId = eventId;
     }
 
     public String getEventTitle() {
@@ -37,6 +48,22 @@ public class TicketResponseDTO {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public String getUserRegistrationNumber() {
+        return userRegistrationNumber;
+    }
+
+    public void setUserRegistrationNumber(String userRegistrationNumber) {
+        this.userRegistrationNumber = userRegistrationNumber;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     public String getQrCodeHash() {

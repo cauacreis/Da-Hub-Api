@@ -24,17 +24,7 @@ public class TicketController {
     @PreAuthorize("hasAnyRole('STUDENT', 'DIRECTOR', 'VP')")
     public ResponseEntity<?> bookTicket(@PathVariable UUID eventId) {
         try {
-            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            String userEmail = "";
-            if (principal instanceof com.dahub.domain.entity.User) {
-                userEmail = ((com.dahub.domain.entity.User) principal).getEmail();
-            } else if (principal instanceof String) {
-                userEmail = (String) principal;
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Principal is of type: " + principal.getClass().getName());
-            }
-
-            System.out.println("Extracted email from token: [" + userEmail + "]");
+            String userEmail = extractEmailFromPrincipal();
 
             TicketResponseDTO ticketResponse = ticketService.bookTicket(eventId, userEmail);
             return ResponseEntity.ok(ticketResponse);
@@ -55,5 +45,37 @@ public class TicketController {
             }
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
+    }
+    @GetMapping("/my")
+    @PreAuthorize("hasAnyRole('STUDENT', 'DIRECTOR', 'VP')")
+    public ResponseEntity<?> getMyTickets() {
+        try {
+            String userEmail = extractEmailFromPrincipal();
+            return ResponseEntity.ok(ticketService.getMyTickets(userEmail));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{ticketId}/cancel")
+    @PreAuthorize("hasAnyRole('STUDENT', 'DIRECTOR', 'VP')")
+    public ResponseEntity<?> cancelTicket(@PathVariable UUID ticketId) {
+        try {
+            String userEmail = extractEmailFromPrincipal();
+            ticketService.cancelTicket(ticketId, userEmail);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    private String extractEmailFromPrincipal() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof com.dahub.domain.entity.User) {
+            return ((com.dahub.domain.entity.User) principal).getEmail();
+        } else if (principal instanceof String) {
+            return (String) principal;
+        }
+        throw new RuntimeException("Could not extract email from principal");
     }
 }

@@ -21,4 +21,8 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
     Optional<Ticket> findByQrCodeHash(String qrCodeHash);
 
     boolean existsByQrCodeHash(String qrCodeHash);
+
+    boolean existsByEventIdAndUserEmailAndStatusIn(UUID eventId, String userEmail, List<TicketStatus> statuses);
+
+    List<Ticket> findByUserEmailAndStatusIn(String userEmail, List<TicketStatus> statuses);
 }

@@ -3,6 +3,8 @@ import { QrCode } from 'lucide-react';
 interface TicketData {
   eventTitle: string;
   userName: string;
+  userEmail: string;
+  userRegistrationNumber: string;
   qrCodeHash: string;
   status: string;
 }
@@ -34,6 +36,14 @@ export function TicketModal({ isOpen, onClose, ticket }: TicketModalProps) {
           <div>
             <p className="text-xs font-bold uppercase text-zinc-500 mb-1">Participante</p>
             <p className="text-lg font-bold uppercase truncate">{ticket.userName}</p>
+            <div className="flex gap-4 mt-1">
+              <p className="text-sm font-bold text-zinc-600 bg-zinc-200 px-2 py-0.5 border-2 border-zinc-950">
+                {ticket.userRegistrationNumber}
+              </p>
+              <p className="text-sm font-bold text-zinc-600 truncate">
+                {ticket.userEmail}
+              </p>
+            </div>
           </div>
 
           <div className="flex justify-between items-end border-t-4 border-dashed border-zinc-400 pt-6 mt-2">
