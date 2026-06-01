@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, LayoutDashboard, CalendarDays, Users, Tag } from 'lucide-react';
 import { api } from '../services/api';
+import { CreateEventModal } from '../components/CreateEventModal';
 
 interface EventData {
   id: string;
@@ -18,6 +19,7 @@ export function Dashboard() {
   const [events, setEvents] = useState<EventData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -72,7 +74,10 @@ export function Dashboard() {
       <main className="flex-1 flex flex-col gap-6">
         <div className="flex justify-between items-end">
           <h2 className="text-3xl font-bold uppercase text-zinc-50 tracking-tighter">Eventos Ativos</h2>
-          <button className="bg-zinc-50 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-6 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="bg-zinc-50 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-6 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none"
+          >
             + Novo Evento
           </button>
         </div>
@@ -131,6 +136,12 @@ export function Dashboard() {
           </div>
         )}
       </main>
+
+      <CreateEventModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={fetchEvents}
+      />
     </div>
   );
 }
