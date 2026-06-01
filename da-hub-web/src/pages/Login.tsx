@@ -87,6 +87,18 @@ export function Login() {
             {isLoading ? 'Entrando...' : 'Iniciar Sessão'}
           </button>
         </form>
+
+        <div className="text-center mt-2">
+          <p className="text-zinc-400 font-medium text-sm">
+            Ainda não tem conta?{' '}
+            <button 
+              onClick={() => navigate('/register')} 
+              className="text-yellow-400 hover:text-zinc-50 transition-colors uppercase font-bold tracking-wider"
+            >
+              Crie uma
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -32,7 +32,7 @@ public class UserService {
                 .email(dto.getEmail())
                 .registrationNumber(dto.getRegistrationNumber())
                 .password(passwordEncoder.encode(dto.getPassword()))
-                .role(dto.getRole())
+                .role(com.dahub.domain.entity.enums.Role.STUDENT)
                 .build();
 
         return userRepository.save(user);

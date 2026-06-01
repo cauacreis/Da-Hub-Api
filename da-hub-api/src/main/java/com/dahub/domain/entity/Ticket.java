@@ -29,6 +29,9 @@ public class Ticket {
     @Column(nullable = false)
     private TicketStatus status;
 
+    @Version
+    private Long version;
+
     public Ticket() {}
 
     public Ticket(UUID id, User user, Event event, String qrCodeHash, TicketStatus status) {
@@ -53,6 +56,9 @@ public class Ticket {
 
     public TicketStatus getStatus() { return status; }
     public void setStatus(TicketStatus status) { this.status = status; }
+
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 
     @Override
     public boolean equals(Object o) {

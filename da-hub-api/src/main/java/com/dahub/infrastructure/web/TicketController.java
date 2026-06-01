@@ -39,6 +39,8 @@ public class TicketController {
         try {
             TicketResponseDTO ticketResponse = ticketService.scanTicket(qrCodeHash);
             return ResponseEntity.ok(ticketResponse);
+        } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Conflito: Ingresso já escaneado em outra transação");
         } catch (RuntimeException e) {
             if (e.getMessage().equals("Ticket not found")) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
