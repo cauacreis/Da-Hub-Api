@@ -108,4 +108,15 @@ Observe a maravilha do React Router Dom empurrando seu boneco de volta para o Da
 
 ---
 
+## 🚀 Próximos Passos (Roadmap)
+
+A base do DA Hub é sólida. Para o próximo semestre, o mapa do tesouro é claro:
+
+- **Deploy em Nuvem:** Hospedar o Front-end (ex: Vercel) e o Back-end/Banco de Dados (ex: Render, Railway ou AWS) para acesso público.
+- **Módulo de Competições:** Criar o sistema de Chaveamentos (Brackets) para os torneios de E-games.
+- **Módulo de Artes e Cultura:** Submissão e aprovação de exposições/bandas.
+- **Segurança Expandida:** Implementação avançada de Route Guards no React e Blacklist de Tokens.
+
+---
+
 Feito com ☕ e muito *border-4 border-zinc-950* pelo time DA Hub.
