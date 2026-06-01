@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, LayoutDashboard, CalendarDays, Users, Tag } from 'lucide-react';
 import { api } from '../services/api';
 import { CreateEventModal } from '../components/CreateEventModal';
+import { TicketModal } from '../components/TicketModal';
 
 interface EventData {
   id: string;
@@ -20,6 +21,9 @@ export function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [ticketData, setTicketData] = useState(null);
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [bookingEventId, setBookingEventId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -43,6 +47,25 @@ export function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem('@DAHub:token');
     navigate('/');
+  };
+
+  const handleBookTicket = async (eventId: string) => {
+    try {
+      setBookingEventId(eventId);
+      setError('');
+      const response = await api.post(`/tickets/book/${eventId}`);
+      setTicketData(response.data);
+      setIsTicketModalOpen(true);
+      fetchEvents(); // Refresh capacity
+    } catch (err: any) {
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setError('Você precisa estar logado para garantir ingresso.');
+      } else {
+        setError(err.response?.data?.message || err.response?.data || 'Erro ao garantir ingresso.');
+      }
+    } finally {
+      setBookingEventId(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -127,9 +150,22 @@ export function Dashboard() {
                   </div>
                 </div>
 
-                <button className="bg-zinc-50 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-4 hover:bg-yellow-400 transition-colors mt-2 w-full text-sm flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => handleBookTicket(event.id)}
+                  disabled={event.currentTicketsSold >= event.maxCapacity || bookingEventId === event.id}
+                  className={`border-4 border-zinc-950 font-bold uppercase py-2 px-4 transition-all mt-2 w-full text-sm flex items-center justify-center gap-2 ${
+                    event.currentTicketsSold >= event.maxCapacity 
+                      ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' 
+                      : 'bg-zinc-50 text-zinc-950 hover:bg-yellow-400 hover:shadow-neo active:translate-y-1 active:translate-x-1 active:shadow-none'
+                  }`}
+                >
                   <Tag className="w-4 h-4" />
-                  Gerenciar Evento
+                  {bookingEventId === event.id 
+                    ? 'Emitindo...' 
+                    : event.currentTicketsSold >= event.maxCapacity 
+                      ? 'Esgotado' 
+                      : 'Garantir Ingresso'
+                  }
                 </button>
               </div>
             ))}
@@ -141,6 +177,12 @@ export function Dashboard() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onSuccess={fetchEvents}
+      />
+
+      <TicketModal
+        isOpen={isTicketModalOpen}
+        onClose={() => setIsTicketModalOpen(false)}
+        ticket={ticketData}
       />
     </div>
   );
