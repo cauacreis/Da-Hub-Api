@@ -4,6 +4,8 @@ import com.dahub.application.dto.EventCreateDTO;
 import com.dahub.application.dto.EventResponseDTO;
 import com.dahub.domain.entity.Event;
 import com.dahub.domain.repository.EventRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,10 +34,9 @@ public class EventService {
         return mapToResponse(event);
     }
 
-    public List<EventResponseDTO> findAllEvents() {
-        return eventRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<EventResponseDTO> findAllEvents(Pageable pageable) {
+        return eventRepository.findAll(pageable)
+                .map(this::mapToResponse);
     }
 
     private EventResponseDTO mapToResponse(Event event) {

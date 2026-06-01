@@ -28,8 +28,8 @@ public class EventController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EventResponseDTO>> getAllEvents() {
-        List<EventResponseDTO> events = eventService.findAllEvents();
+    public ResponseEntity<org.springframework.data.domain.Page<EventResponseDTO>> getAllEvents(org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<EventResponseDTO> events = eventService.findAllEvents(pageable);
         return ResponseEntity.ok(events);
     }
 }

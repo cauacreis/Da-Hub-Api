@@ -20,11 +20,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO) {
-        try {
-            TokenResponseDTO token = authService.login(loginDTO);
-            return ResponseEntity.ok(token);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        }
+        TokenResponseDTO token = authService.login(loginDTO);
+        return ResponseEntity.ok(token);
     }
 }

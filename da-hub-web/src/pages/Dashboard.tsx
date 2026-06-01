@@ -18,6 +18,9 @@ interface EventData {
 export function Dashboard() {
   const navigate = useNavigate();
   const [events, setEvents] = useState<EventData[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,16 +42,17 @@ export function Dashboard() {
       }
     }
     fetchData();
-  }, []);
+  }, [currentPage]);
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
       const [eventsResponse, myTicketsResponse] = await Promise.all([
-        api.get('/events'),
+        api.get(`/events?page=${currentPage}&size=6`),
         api.get('/tickets/my').catch(() => ({ data: [] }))
       ]);
-      setEvents(eventsResponse.data);
+      setEvents(eventsResponse.data.content || eventsResponse.data);
+      setTotalPages(eventsResponse.data.totalPages || 1);
       setMyTickets(myTicketsResponse.data);
     } catch (err: any) {
       if (err.response?.status === 401 || err.response?.status === 403) {
@@ -162,72 +166,96 @@ export function Dashboard() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => {
-              const myTicket = myTickets.find(t => t.eventId === event.id && (t.status === 'PAID' || t.status === 'USED'));
-              return (
-              <div key={event.id} className="bg-zinc-900 border-4 border-zinc-50 p-6 flex flex-col gap-4 shadow-neo hover:shadow-neo-hover transition-all group">
-                <div className="flex justify-between items-start gap-2">
-                  <h3 className="text-xl font-bold uppercase text-zinc-50 group-hover:text-yellow-400 transition-colors line-clamp-2">
-                    {event.title}
-                  </h3>
-                  <span className="bg-zinc-800 text-xs font-bold px-2 py-1 border-2 border-zinc-50 text-zinc-50 uppercase whitespace-nowrap">
-                    {event.category}
-                  </span>
-                </div>
-                
-                <p className="text-zinc-400 text-sm font-medium line-clamp-3 flex-1">
-                  {event.description}
-                </p>
+          <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.map((event) => {
+                const myTicket = myTickets.find(t => t.eventId === event.id && (t.status === 'PAID' || t.status === 'USED'));
+                return (
+                <div key={event.id} className="bg-zinc-900 border-4 border-zinc-50 p-6 flex flex-col gap-4 shadow-neo hover:shadow-neo-hover transition-all group">
+                  <div className="flex justify-between items-start gap-2">
+                    <h3 className="text-xl font-bold uppercase text-zinc-50 group-hover:text-yellow-400 transition-colors line-clamp-2">
+                      {event.title}
+                    </h3>
+                    <span className="bg-zinc-800 text-xs font-bold px-2 py-1 border-2 border-zinc-50 text-zinc-50 uppercase whitespace-nowrap">
+                      {event.category}
+                    </span>
+                  </div>
+                  
+                  <p className="text-zinc-400 text-sm font-medium line-clamp-3 flex-1">
+                    {event.description}
+                  </p>
 
-                <div className="flex flex-col gap-2 mt-4 pt-4 border-t-2 border-zinc-800">
-                  <div className="flex items-center gap-2 text-zinc-300 text-sm font-bold">
-                    <CalendarDays className="w-4 h-4" />
-                    {formatDate(event.eventDate)}
+                  <div className="flex flex-col gap-2 mt-4 pt-4 border-t-2 border-zinc-800">
+                    <div className="flex items-center gap-2 text-zinc-300 text-sm font-bold">
+                      <CalendarDays className="w-4 h-4" />
+                      {formatDate(event.eventDate)}
+                    </div>
+                    <div className="flex items-center gap-2 text-zinc-300 text-sm font-bold">
+                      <Users className="w-4 h-4" />
+                      {event.currentTicketsSold} / {event.maxCapacity} Ingressos
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-zinc-300 text-sm font-bold">
-                    <Users className="w-4 h-4" />
-                    {event.currentTicketsSold} / {event.maxCapacity} Ingressos
-                  </div>
-                </div>
 
-                {myTicket ? (
-                  <div className="flex gap-2 mt-2">
+                  {myTicket ? (
+                    <div className="flex gap-2 mt-2">
+                      <button 
+                        onClick={() => { setTicketData(myTicket); setIsTicketModalOpen(true); }}
+                        className="flex-1 bg-yellow-400 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-2 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-xs flex items-center justify-center gap-1"
+                      >
+                        <Tag className="w-3 h-3" /> Ver Ingresso
+                      </button>
+                      <button 
+                        onClick={() => handleCancelTicket(myTicket.ticketId)}
+                        className="bg-zinc-950 text-red-500 border-4 border-red-500 font-bold uppercase py-2 px-2 hover:bg-red-500 hover:text-zinc-950 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-xs flex items-center justify-center"
+                        title="Cancelar Inscrição"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
                     <button 
-                      onClick={() => { setTicketData(myTicket); setIsTicketModalOpen(true); }}
-                      className="flex-1 bg-yellow-400 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-2 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-xs flex items-center justify-center gap-1"
+                      onClick={() => handleBookTicket(event.id)}
+                      disabled={event.currentTicketsSold >= event.maxCapacity || bookingEventId === event.id}
+                      className={`border-4 border-zinc-950 font-bold uppercase py-2 px-4 transition-all mt-2 w-full text-sm flex items-center justify-center gap-2 ${
+                        event.currentTicketsSold >= event.maxCapacity 
+                          ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' 
+                          : 'bg-zinc-50 text-zinc-950 hover:bg-yellow-400 hover:shadow-neo active:translate-y-1 active:translate-x-1 active:shadow-none'
+                      }`}
                     >
-                      <Tag className="w-3 h-3" /> Ver Ingresso
+                      <Tag className="w-4 h-4" />
+                      {bookingEventId === event.id 
+                        ? 'Emitindo...' 
+                        : event.currentTicketsSold >= event.maxCapacity 
+                          ? 'Esgotado' 
+                          : 'Garantir Ingresso'
+                      }
                     </button>
-                    <button 
-                      onClick={() => handleCancelTicket(myTicket.ticketId)}
-                      className="bg-zinc-950 text-red-500 border-4 border-red-500 font-bold uppercase py-2 px-2 hover:bg-red-500 hover:text-zinc-950 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-xs flex items-center justify-center"
-                      title="Cancelar Inscrição"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                ) : (
-                  <button 
-                    onClick={() => handleBookTicket(event.id)}
-                    disabled={event.currentTicketsSold >= event.maxCapacity || bookingEventId === event.id}
-                    className={`border-4 border-zinc-950 font-bold uppercase py-2 px-4 transition-all mt-2 w-full text-sm flex items-center justify-center gap-2 ${
-                      event.currentTicketsSold >= event.maxCapacity 
-                        ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' 
-                        : 'bg-zinc-50 text-zinc-950 hover:bg-yellow-400 hover:shadow-neo active:translate-y-1 active:translate-x-1 active:shadow-none'
-                    }`}
-                  >
-                    <Tag className="w-4 h-4" />
-                    {bookingEventId === event.id 
-                      ? 'Emitindo...' 
-                      : event.currentTicketsSold >= event.maxCapacity 
-                        ? 'Esgotado' 
-                        : 'Garantir Ingresso'
-                    }
-                  </button>
-                )}
+                  )}
+                </div>
+              )})}
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-4">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                  disabled={currentPage === 0}
+                  className="bg-zinc-950 text-zinc-50 border-4 border-zinc-50 font-bold uppercase py-2 px-6 hover:shadow-neo disabled:opacity-50 disabled:cursor-not-allowed transition-all active:translate-y-1 active:translate-x-1 active:shadow-none"
+                >
+                  Anterior
+                </button>
+                <span className="text-zinc-50 font-bold uppercase tracking-widest">
+                  {currentPage + 1} / {totalPages}
+                </span>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={currentPage >= totalPages - 1}
+                  className="bg-zinc-950 text-zinc-50 border-4 border-zinc-50 font-bold uppercase py-2 px-6 hover:shadow-neo disabled:opacity-50 disabled:cursor-not-allowed transition-all active:translate-y-1 active:translate-x-1 active:shadow-none"
+                >
+                  Próxima
+                </button>
               </div>
-            )})}
+            )}
           </div>
         )}
       </main>

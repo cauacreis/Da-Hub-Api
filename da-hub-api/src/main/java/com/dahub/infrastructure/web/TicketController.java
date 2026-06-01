@@ -22,53 +22,32 @@ public class TicketController {
 
     @PostMapping("/book/{eventId}")
     @PreAuthorize("hasAnyRole('STUDENT', 'DIRECTOR', 'VP')")
-    public ResponseEntity<?> bookTicket(@PathVariable UUID eventId) {
-        try {
-            String userEmail = extractEmailFromPrincipal();
-
-            TicketResponseDTO ticketResponse = ticketService.bookTicket(eventId, userEmail);
-            return ResponseEntity.ok(ticketResponse);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    public ResponseEntity<TicketResponseDTO> bookTicket(@PathVariable UUID eventId) {
+        String userEmail = extractEmailFromPrincipal();
+        TicketResponseDTO ticketResponse = ticketService.bookTicket(eventId, userEmail);
+        return ResponseEntity.ok(ticketResponse);
     }
 
     @PostMapping("/scan/{qrCodeHash}")
     @PreAuthorize("hasAnyRole('DIRECTOR', 'VP')")
-    public ResponseEntity<?> scanTicket(@PathVariable String qrCodeHash) {
-        try {
-            TicketResponseDTO ticketResponse = ticketService.scanTicket(qrCodeHash);
-            return ResponseEntity.ok(ticketResponse);
-        } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Conflito: Ingresso já escaneado em outra transação");
-        } catch (RuntimeException e) {
-            if (e.getMessage().equals("Ticket not found")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-            }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    public ResponseEntity<TicketResponseDTO> scanTicket(@PathVariable String qrCodeHash) {
+        TicketResponseDTO ticketResponse = ticketService.scanTicket(qrCodeHash);
+        return ResponseEntity.ok(ticketResponse);
     }
+
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('STUDENT', 'DIRECTOR', 'VP')")
     public ResponseEntity<?> getMyTickets() {
-        try {
-            String userEmail = extractEmailFromPrincipal();
-            return ResponseEntity.ok(ticketService.getMyTickets(userEmail));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        String userEmail = extractEmailFromPrincipal();
+        return ResponseEntity.ok(ticketService.getMyTickets(userEmail));
     }
 
     @PostMapping("/{ticketId}/cancel")
     @PreAuthorize("hasAnyRole('STUDENT', 'DIRECTOR', 'VP')")
-    public ResponseEntity<?> cancelTicket(@PathVariable UUID ticketId) {
-        try {
-            String userEmail = extractEmailFromPrincipal();
-            ticketService.cancelTicket(ticketId, userEmail);
-            return ResponseEntity.ok().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    public ResponseEntity<Void> cancelTicket(@PathVariable UUID ticketId) {
+        String userEmail = extractEmailFromPrincipal();
+        ticketService.cancelTicket(ticketId, userEmail);
+        return ResponseEntity.ok().build();
     }
 
     private String extractEmailFromPrincipal() {

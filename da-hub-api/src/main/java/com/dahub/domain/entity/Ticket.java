@@ -6,7 +6,9 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tb_tickets")
+@Table(name = "tb_tickets", indexes = {
+    @Index(name = "idx_qr_code_hash", columnList = "qr_code_hash")
+})
 public class Ticket {
 
     @Id
