@@ -7,19 +7,23 @@ spring:
     name: da-hub-api
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/dahub
-    username: "postgres"
-    password: "admin"
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:h2:mem:dahub;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
 
   jpa:
     hibernate:
       ddl-auto: update
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
 
 server:
   port: 8080
