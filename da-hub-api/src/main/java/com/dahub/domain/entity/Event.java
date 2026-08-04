@@ -34,9 +34,24 @@ public class Event {
     @Column(name = "current_tickets_sold", nullable = false)
     private Integer currentTicketsSold = 0;
 
+    @Column(name = "is_paid", nullable = false)
+    private Boolean isPaid = false;
+
+    @Column(name = "price")
+    private Double price = 0.0;
+
+    @Column(name = "max_tickets_per_user", nullable = false)
+    private Integer maxTicketsPerUser = 1;
+
+    @Column(name = "requires_attachment", nullable = false)
+    private Boolean requiresAttachment = false;
+
+    @Column(name = "attachment_requirements_json", columnDefinition = "TEXT")
+    private String attachmentRequirementsJson;
+
     public Event() {}
 
-    public Event(UUID id, String title, String description, EventCategory category, LocalDateTime eventDate, Integer maxCapacity, Integer currentTicketsSold) {
+    public Event(UUID id, String title, String description, EventCategory category, LocalDateTime eventDate, Integer maxCapacity, Integer currentTicketsSold, Boolean isPaid, Double price, Integer maxTicketsPerUser, Boolean requiresAttachment, String attachmentRequirementsJson) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -44,7 +59,27 @@ public class Event {
         this.eventDate = eventDate;
         this.maxCapacity = maxCapacity;
         this.currentTicketsSold = currentTicketsSold != null ? currentTicketsSold : 0;
+        this.isPaid = isPaid != null ? isPaid : false;
+        this.price = price != null ? price : 0.0;
+        this.maxTicketsPerUser = maxTicketsPerUser != null ? maxTicketsPerUser : 1;
+        this.requiresAttachment = requiresAttachment != null ? requiresAttachment : false;
+        this.attachmentRequirementsJson = attachmentRequirementsJson;
     }
+
+    public Boolean getIsPaid() { return isPaid; }
+    public void setIsPaid(Boolean isPaid) { this.isPaid = isPaid; }
+
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
+
+    public Integer getMaxTicketsPerUser() { return maxTicketsPerUser; }
+    public void setMaxTicketsPerUser(Integer maxTicketsPerUser) { this.maxTicketsPerUser = maxTicketsPerUser; }
+
+    public Boolean getRequiresAttachment() { return requiresAttachment; }
+    public void setRequiresAttachment(Boolean requiresAttachment) { this.requiresAttachment = requiresAttachment; }
+
+    public String getAttachmentRequirementsJson() { return attachmentRequirementsJson; }
+    public void setAttachmentRequirementsJson(String attachmentRequirementsJson) { this.attachmentRequirementsJson = attachmentRequirementsJson; }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
