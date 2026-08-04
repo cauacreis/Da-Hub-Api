@@ -78,6 +78,30 @@ A navegação foi projetada para ter paredes grossas entre os papéis de usuári
 
 ---
 
+## 🎨 Novas Funcionalidades v1.1.0
+
+### 1. 💳 Eventos Pagos & Integração Mercado Pago
+- Criador do evento pode ativar a opção **"Evento Pago"** com valor em R$.
+- Ingressos nascem com status `PENDING_PAYMENT` e geram **Payload PIX / Link Checkout do Mercado Pago**.
+- Confirmação automática via Webhook/Sandbox alterando o ingresso para `PAID`.
+
+### 2. 📁 Upload Seguro de Anexos (Armazenamento Anti-Abuso)
+- O criador do evento pode adicionar campos customizados de anexo (ex: *"Comprovante de estudante"*, *"Envio da arte"*).
+- Validação no backend com whitelist de MIME types (`image/*`, `application/pdf`, `video/mp4`, `audio/mpeg`) e limite de 15MB.
+- **Hospedagem Gratuita & Segura:** Arquivos gravados no disco em `/uploads/` com nome randômico UUID para eliminar Path Traversal e Execução de Código (RCE) conforme o **Manual do Vibecoder**.
+
+### 3. 👥 Gestão de Candidatos & Relatórios PDF
+- Painel Admin para busca, filtragem e alteração de presença manual de candidatos (`PAID` <-> `USED`).
+- Visualizador de anexos integrado para fotos, vídeos, áudios e documentos.
+- **Gerador de Relatório PDF:** Botão em 1-clique (`jsPDF`) que compila o relatório oficial A4 com estatísticas do evento, candidatos presentes (QR Code lido) e ausentes (com nome e matrícula).
+
+### 4. 📺 Modo TV / Datashow HDMI
+- Transmissão em **Tela Cheia** (*Fullscreen API*) otimizada para projetores/TVs via cabo HDMI.
+- Carrossel automático das artes, vídeos e imagens dos candidatos inscritos.
+- Configuração de tempo de slide (3s, 5s, 10s, 15s), exibição/ocultação de nome/matrícula do aluno e ajuste de proporção (`contain`/`cover`).
+
+---
+
 ## ⚔️ Roteiro de Testes Táticos
 
 Quer ver a plataforma brilhar sob pressão? Siga este roteiro.
@@ -98,13 +122,6 @@ Quer clonar um ingresso?
 ### 3. Teste de Penetração Frontend (Escalação de Privilégios)
 Logue como aluno. Abra a URL e digite `http://localhost:5173/scanner`. Pressione Enter.
 Observe a maravilha do React Router Dom empurrando seu boneco de volta para o Dashboard.
-
-### 4. Teste de Lotação Máxima
-1. Como VP, crie o evento "Resenha Secreta" com lotação de **2 ingressos**.
-2. Garanta o ingresso 1 com a conta "aluno".
-3. Crie uma conta nova no `/register` ("João Ninguém") e garanta o ingresso 2.
-4. Tente pegar o ingresso 3 com a conta do "VP".
-> **O Resultado:** O botão do evento fica Cinza. A interface cospe "Esgotado". O banco grita `Bad Request` se você forçar pelo Postman.
 
 ---
 
