@@ -5,7 +5,14 @@ import { api } from '../services/api';
 import { CreateEventModal } from '../components/CreateEventModal';
 import { TicketModal } from '../components/TicketModal';
 
-interface EventData {
+export interface AttachmentRequirement {
+  id: string;
+  label: string;
+  allowedTypes: string;
+  required: boolean;
+}
+
+export interface EventData {
   id: string;
   title: string;
   description: string;
@@ -13,6 +20,11 @@ interface EventData {
   eventDate: string;
   maxCapacity: number;
   currentTicketsSold: number;
+  isPaid?: boolean;
+  price?: number;
+  maxTicketsPerUser?: number;
+  requiresAttachment?: boolean;
+  attachmentRequirementsJson?: string;
 }
 
 export function Dashboard() {
