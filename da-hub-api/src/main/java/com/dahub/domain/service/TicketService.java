@@ -58,17 +58,41 @@ public class TicketService {
 
         ticket = ticketRepository.save(ticket);
 
-        TicketResponseDTO responseDTO = new TicketResponseDTO();
-        responseDTO.setTicketId(ticket.getId());
-        responseDTO.setEventId(event.getId());
-        responseDTO.setEventTitle(event.getTitle());
-        responseDTO.setUserName(user.getName());
-        responseDTO.setUserEmail(user.getEmail());
-        responseDTO.setUserRegistrationNumber(user.getRegistrationNumber());
-        responseDTO.setQrCodeHash(ticket.getQrCodeHash());
-        responseDTO.setStatus(ticket.getStatus());
+        return mapToDTO(ticket);
+    }
 
-        return responseDTO;
+    public TicketResponseDTO bookTicketWithAttachments(UUID eventId, String userEmail, List<org.springframework.web.multipart.MultipartFile> files, List<String> labels, FileUploadService fileUploadService) {
+        TicketResponseDTO dto = bookTicket(eventId, userEmail);
+        Ticket ticket = ticketRepository.findById(dto.getTicketId()).orElseThrow(() -> new RuntimeException("Ticket not found"));
+        
+        if (files != null && labels != null && files.size() == labels.size()) {
+            for (int i = 0; i < files.size(); i++) {
+                org.springframework.web.multipart.MultipartFile file = files.get(i);
+                String label = labels.get(i);
+                if (file != null && !file.isEmpty()) {
+                    String storedPath = fileUploadService.storeFile(file);
+                    com.dahub.domain.entity.TicketAttachment attachment = new com.dahub.domain.entity.TicketAttachment();
+                    attachment.setTicket(ticket);
+                    attachment.setRequirementLabel(label);
+                    attachment.setFileName(file.getOriginalFilename() != null ? file.getOriginalFilename() : "anexo");
+                    attachment.setFilePath(storedPath);
+                    attachment.setMimeType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
+                    attachment.setFileSize(file.getSize());
+                    ticket.getAttachments().add(attachment);
+                }
+            }
+            
+            // Se o evento é pago, define o status como PENDING_PAYMENT
+            if (Boolean.TRUE.equals(ticket.getEvent().getIsPaid())) {
+                ticket.setStatus(TicketStatus.PENDING_PAYMENT);
+            }
+            
+            ticket = ticketRepository.save(ticket);
+        } else if (Boolean.TRUE.equals(ticket.getEvent().getIsPaid())) {
+            ticket.setStatus(TicketStatus.PENDING_PAYMENT);
+            ticket = ticketRepository.save(ticket);
+        }
+        return mapToDTO(ticket);
     }
 
     public TicketResponseDTO scanTicket(String qrCodeHash) {
@@ -102,23 +126,39 @@ public class TicketService {
         return responseDTO;
     }
 
+    public TicketResponseDTO mapToDTO(Ticket ticket) {
+        TicketResponseDTO dto = new TicketResponseDTO();
+        dto.setTicketId(ticket.getId());
+        dto.setEventId(ticket.getEvent().getId());
+        dto.setEventTitle(ticket.getEvent().getTitle());
+        dto.setUserName(ticket.getUser().getName());
+        dto.setUserEmail(ticket.getUser().getEmail());
+        dto.setUserRegistrationNumber(ticket.getUser().getRegistrationNumber());
+        dto.setQrCodeHash(ticket.getQrCodeHash());
+        dto.setStatus(ticket.getStatus());
+        dto.setPaymentId(ticket.getPaymentId());
+
+        if (ticket.getAttachments() != null) {
+            List<com.dahub.application.dto.TicketAttachmentDTO> attDTOs = ticket.getAttachments().stream().map(att -> 
+                new com.dahub.application.dto.TicketAttachmentDTO(
+                    att.getId(),
+                    att.getRequirementLabel(),
+                    att.getFileName(),
+                    att.getFilePath(),
+                    att.getMimeType(),
+                    att.getFileSize()
+                )
+            ).collect(Collectors.toList());
+            dto.setAttachments(attDTOs);
+        }
+        return dto;
+    }
+
     public List<TicketResponseDTO> getMyTickets(String userEmail) {
         List<Ticket> tickets = ticketRepository.findByUserEmailAndStatusIn(
-                userEmail, List.of(TicketStatus.PAID, TicketStatus.USED)
+                userEmail, List.of(TicketStatus.PAID, TicketStatus.USED, TicketStatus.PENDING_PAYMENT)
         );
-
-        return tickets.stream().map(ticket -> {
-            TicketResponseDTO dto = new TicketResponseDTO();
-            dto.setTicketId(ticket.getId());
-            dto.setEventId(ticket.getEvent().getId());
-            dto.setEventTitle(ticket.getEvent().getTitle());
-            dto.setUserName(ticket.getUser().getName());
-            dto.setUserEmail(ticket.getUser().getEmail());
-            dto.setUserRegistrationNumber(ticket.getUser().getRegistrationNumber());
-            dto.setQrCodeHash(ticket.getQrCodeHash());
-            dto.setStatus(ticket.getStatus());
-            return dto;
-        }).collect(Collectors.toList());
+        return tickets.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
     public void cancelTicket(UUID ticketId, String userEmail) {
@@ -145,5 +185,18 @@ public class TicketService {
             event.setCurrentTicketsSold(event.getCurrentTicketsSold() - 1);
             eventRepository.save(event);
         }
+    }
+
+    public List<TicketResponseDTO> getTicketsByEvent(UUID eventId) {
+        List<Ticket> tickets = ticketRepository.findByEventId(eventId);
+        return tickets.stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
+
+    public TicketResponseDTO updateTicketStatusAdmin(UUID ticketId, TicketStatus newStatus) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+        ticket.setStatus(newStatus);
+        ticket = ticketRepository.save(ticket);
+        return mapToDTO(ticket);
     }
 }
