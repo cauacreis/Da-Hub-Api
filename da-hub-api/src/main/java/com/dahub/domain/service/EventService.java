@@ -29,6 +29,12 @@ public class EventService {
         event.setMaxCapacity(dto.getMaxCapacity());
         event.setCurrentTicketsSold(0);
 
+        event.setIsPaid(dto.getIsPaid() != null ? dto.getIsPaid() : false);
+        event.setPrice(dto.getPrice() != null ? dto.getPrice() : 0.0);
+        event.setMaxTicketsPerUser(dto.getMaxTicketsPerUser() != null ? dto.getMaxTicketsPerUser() : 1);
+        event.setRequiresAttachment(dto.getRequiresAttachment() != null ? dto.getRequiresAttachment() : false);
+        event.setAttachmentRequirementsJson(dto.getAttachmentRequirementsJson());
+
         event = eventRepository.save(event);
 
         return mapToResponse(event);
@@ -48,6 +54,11 @@ public class EventService {
         response.setEventDate(event.getEventDate());
         response.setMaxCapacity(event.getMaxCapacity());
         response.setCurrentTicketsSold(event.getCurrentTicketsSold());
+        response.setIsPaid(event.getIsPaid());
+        response.setPrice(event.getPrice());
+        response.setMaxTicketsPerUser(event.getMaxTicketsPerUser());
+        response.setRequiresAttachment(event.getRequiresAttachment());
+        response.setAttachmentRequirementsJson(event.getAttachmentRequirementsJson());
         return response;
     }
 }
