@@ -14,6 +14,26 @@ public class EventResponseDTO {
     private LocalDateTime eventDate;
     private Integer maxCapacity;
     private Integer currentTicketsSold;
+    private Boolean isPaid;
+    private Double price;
+    private Integer maxTicketsPerUser;
+    private Boolean requiresAttachment;
+    private String attachmentRequirementsJson;
+
+    public Boolean getIsPaid() { return isPaid; }
+    public void setIsPaid(Boolean isPaid) { this.isPaid = isPaid; }
+
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
+
+    public Integer getMaxTicketsPerUser() { return maxTicketsPerUser; }
+    public void setMaxTicketsPerUser(Integer maxTicketsPerUser) { this.maxTicketsPerUser = maxTicketsPerUser; }
+
+    public Boolean getRequiresAttachment() { return requiresAttachment; }
+    public void setRequiresAttachment(Boolean requiresAttachment) { this.requiresAttachment = requiresAttachment; }
+
+    public String getAttachmentRequirementsJson() { return attachmentRequirementsJson; }
+    public void setAttachmentRequirementsJson(String attachmentRequirementsJson) { this.attachmentRequirementsJson = attachmentRequirementsJson; }
 
     public EventResponseDTO() {
     }

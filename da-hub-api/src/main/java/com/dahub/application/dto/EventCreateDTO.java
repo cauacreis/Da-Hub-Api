@@ -26,6 +26,27 @@ public class EventCreateDTO {
     @Positive
     private Integer maxCapacity;
 
+    private Boolean isPaid = false;
+    private Double price = 0.0;
+    private Integer maxTicketsPerUser = 1;
+    private Boolean requiresAttachment = false;
+    private String attachmentRequirementsJson;
+
+    public Boolean getIsPaid() { return isPaid; }
+    public void setIsPaid(Boolean isPaid) { this.isPaid = isPaid; }
+
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
+
+    public Integer getMaxTicketsPerUser() { return maxTicketsPerUser; }
+    public void setMaxTicketsPerUser(Integer maxTicketsPerUser) { this.maxTicketsPerUser = maxTicketsPerUser; }
+
+    public Boolean getRequiresAttachment() { return requiresAttachment; }
+    public void setRequiresAttachment(Boolean requiresAttachment) { this.requiresAttachment = requiresAttachment; }
+
+    public String getAttachmentRequirementsJson() { return attachmentRequirementsJson; }
+    public void setAttachmentRequirementsJson(String attachmentRequirementsJson) { this.attachmentRequirementsJson = attachmentRequirementsJson; }
+
     public EventCreateDTO() {
     }
 
