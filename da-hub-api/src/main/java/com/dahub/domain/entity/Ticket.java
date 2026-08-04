@@ -31,6 +31,12 @@ public class Ticket {
     @Column(nullable = false)
     private TicketStatus status;
 
+    @Column(name = "payment_id")
+    private String paymentId;
+
+    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<TicketAttachment> attachments = new java.util.ArrayList<>();
+
     @Version
     private Long version;
 
@@ -43,6 +49,12 @@ public class Ticket {
         this.qrCodeHash = qrCodeHash;
         this.status = status;
     }
+
+    public String getPaymentId() { return paymentId; }
+    public void setPaymentId(String paymentId) { this.paymentId = paymentId; }
+
+    public java.util.List<TicketAttachment> getAttachments() { return attachments; }
+    public void setAttachments(java.util.List<TicketAttachment> attachments) { this.attachments = attachments; }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
