@@ -81,4 +81,13 @@ public class TicketResponseDTO {
     public void setStatus(TicketStatus status) {
         this.status = status;
     }
+
+    private String paymentId;
+    private java.util.List<TicketAttachmentDTO> attachments = new java.util.ArrayList<>();
+
+    public String getPaymentId() { return paymentId; }
+    public void setPaymentId(String paymentId) { this.paymentId = paymentId; }
+
+    public java.util.List<TicketAttachmentDTO> getAttachments() { return attachments; }
+    public void setAttachments(java.util.List<TicketAttachmentDTO> attachments) { this.attachments = attachments; }
 }
