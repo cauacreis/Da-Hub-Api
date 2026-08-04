@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, CalendarDays, Users, Tag } from 'lucide-react';
+import { LogOut, LayoutDashboard, CalendarDays, Users, Tag, Upload, DollarSign, Tv, UserCheck } from 'lucide-react';
 import { api } from '../services/api';
 import { CreateEventModal } from '../components/CreateEventModal';
 import { TicketModal } from '../components/TicketModal';
+import { CandidateRegistrationModal } from '../components/CandidateRegistrationModal';
+import { ManageCandidatesModal } from '../components/ManageCandidatesModal';
+import { TvPresentationModal } from '../components/TvPresentationModal';
 
 export interface AttachmentRequirement {
   id: string;
@@ -40,6 +43,11 @@ export function Dashboard() {
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [bookingEventId, setBookingEventId] = useState<string | null>(null);
 
+  // New Modals State
+  const [candidateRegEvent, setCandidateRegEvent] = useState<EventData | null>(null);
+  const [adminCandidateEvent, setAdminCandidateEvent] = useState<EventData | null>(null);
+  const [tvEvent, setTvEvent] = useState<EventData | null>(null);
+
   const [myTickets, setMyTickets] = useState<any[]>([]);
   const [userRole, setUserRole] = useState<string>('STUDENT');
 
@@ -70,7 +78,8 @@ export function Dashboard() {
       if (err.response?.status === 401 || err.response?.status === 403) {
         handleLogout();
       } else {
-        setError('Não foi possível carregar os dados.');
+        const msg = typeof err.response?.data === 'string' ? err.response.data : (err.response?.data?.message || 'Não foi possível carregar os dados.');
+        setError(msg);
       }
     } finally {
       setIsLoading(false);
@@ -82,20 +91,25 @@ export function Dashboard() {
     navigate('/');
   };
 
-  const handleBookTicket = async (eventId: string) => {
+  const handleBookTicketClick = (event: EventData) => {
+    if (event.requiresAttachment || event.isPaid) {
+      setCandidateRegEvent(event);
+    } else {
+      handleDirectBookTicket(event.id);
+    }
+  };
+
+  const handleDirectBookTicket = async (eventId: string) => {
     try {
       setBookingEventId(eventId);
       setError('');
       const response = await api.post(`/tickets/book/${eventId}`);
       setTicketData(response.data);
       setIsTicketModalOpen(true);
-      fetchData(); // Refresh capacity and my tickets
+      fetchData();
     } catch (err: any) {
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        setError('Você precisa estar logado para garantir ingresso.');
-      } else {
-        setError(err.response?.data?.message || err.response?.data || 'Erro ao garantir ingresso.');
-      }
+      const msg = typeof err.response?.data === 'string' ? err.response.data : (err.response?.data?.message || 'Erro ao garantir ingresso.');
+      setError(msg);
     } finally {
       setBookingEventId(null);
     }
@@ -107,7 +121,8 @@ export function Dashboard() {
       await api.post(`/tickets/${ticketId}/cancel`);
       fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || err.response?.data || 'Erro ao cancelar inscrição.');
+      const msg = typeof err.response?.data === 'string' ? err.response.data : (err.response?.data?.message || 'Erro ao cancelar inscrição.');
+      setError(msg);
     }
   };
 
@@ -126,7 +141,7 @@ export function Dashboard() {
       <header className="flex items-center justify-between bg-zinc-900 border-4 border-zinc-50 p-6 shadow-neo">
         <div className="flex items-center gap-3">
           <LayoutDashboard className="w-8 h-8 text-zinc-50" />
-          <h1 className="text-2xl font-bold uppercase text-zinc-50 tracking-tighter">Painel da Diretoria</h1>
+          <h1 className="text-2xl font-bold uppercase text-zinc-50 tracking-tighter">Painel DA Hub</h1>
         </div>
         <div className="flex items-center gap-4">
           {userRole !== 'STUDENT' && (
@@ -153,22 +168,22 @@ export function Dashboard() {
           {userRole !== 'STUDENT' && (
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="bg-zinc-50 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-6 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none"
+              className="bg-zinc-50 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-6 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-sm"
             >
-              + Novo Evento
+              + Novo Evento Detalhado
             </button>
           )}
         </div>
 
         {error && (
-          <div className="bg-red-500 text-zinc-50 border-4 border-red-700 p-4 font-bold uppercase">
+          <div className="bg-red-500 text-zinc-50 border-4 border-red-700 p-4 font-bold uppercase text-sm">
             {error}
           </div>
         )}
 
         {isLoading ? (
           <div className="bg-zinc-900 border-4 border-zinc-50 p-8 shadow-neo flex justify-center items-center">
-            <p className="text-zinc-50 font-bold uppercase animate-pulse">Carregando satélites...</p>
+            <p className="text-zinc-50 font-bold uppercase animate-pulse">Carregando eventos do diretório...</p>
           </div>
         ) : events.length === 0 ? (
           <div className="bg-zinc-900 border-4 border-zinc-50 p-12 shadow-neo flex flex-col items-center justify-center gap-4 text-center">
@@ -181,23 +196,40 @@ export function Dashboard() {
           <div className="flex flex-col gap-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => {
-                const myTicket = myTickets.find(t => t.eventId === event.id && (t.status === 'PAID' || t.status === 'USED'));
+                const myTicket = myTickets.find(t => t.eventId === event.id && (t.status === 'PAID' || t.status === 'USED' || t.status === 'PENDING_PAYMENT'));
                 return (
-                <div key={event.id} className="bg-zinc-900 border-4 border-zinc-50 p-6 flex flex-col gap-4 shadow-neo hover:shadow-neo-hover transition-all group">
+                <div key={event.id} className="bg-zinc-900 border-4 border-zinc-50 p-6 flex flex-col gap-4 shadow-neo hover:shadow-neo-hover transition-all group relative">
                   <div className="flex justify-between items-start gap-2">
                     <h3 className="text-xl font-bold uppercase text-zinc-50 group-hover:text-yellow-400 transition-colors line-clamp-2">
                       {event.title}
                     </h3>
-                    <span className="bg-zinc-800 text-xs font-bold px-2 py-1 border-2 border-zinc-50 text-zinc-50 uppercase whitespace-nowrap">
-                      {event.category}
-                    </span>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="bg-zinc-800 text-xs font-bold px-2 py-1 border-2 border-zinc-50 text-zinc-50 uppercase whitespace-nowrap">
+                        {event.category}
+                      </span>
+                      {event.isPaid ? (
+                        <span className="bg-yellow-400 text-zinc-950 text-[10px] font-bold px-2 py-0.5 border-2 border-zinc-950 uppercase flex items-center gap-0.5">
+                          <DollarSign className="w-3 h-3" /> R$ {event.price?.toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="bg-green-500 text-zinc-950 text-[10px] font-bold px-2 py-0.5 border-2 border-zinc-950 uppercase">
+                          Gratuito
+                        </span>
+                      )}
+                    </div>
                   </div>
                   
                   <p className="text-zinc-400 text-sm font-medium line-clamp-3 flex-1">
                     {event.description}
                   </p>
 
-                  <div className="flex flex-col gap-2 mt-4 pt-4 border-t-2 border-zinc-800">
+                  {event.requiresAttachment && (
+                    <div className="bg-zinc-950 border-2 border-zinc-700 p-2 text-xs font-bold text-yellow-400 uppercase flex items-center gap-1">
+                      <Upload className="w-4 h-4" /> Exige Anexo de Comprovante / Arte
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-2 mt-2 pt-4 border-t-2 border-zinc-800">
                     <div className="flex items-center gap-2 text-zinc-300 text-sm font-bold">
                       <CalendarDays className="w-4 h-4" />
                       {formatDate(event.eventDate)}
@@ -208,6 +240,7 @@ export function Dashboard() {
                     </div>
                   </div>
 
+                  {/* Student Ticket Action */}
                   {myTicket ? (
                     <div className="flex gap-2 mt-2">
                       <button 
@@ -226,7 +259,7 @@ export function Dashboard() {
                     </div>
                   ) : (
                     <button 
-                      onClick={() => handleBookTicket(event.id)}
+                      onClick={() => handleBookTicketClick(event)}
                       disabled={event.currentTicketsSold >= event.maxCapacity || bookingEventId === event.id}
                       className={`border-4 border-zinc-950 font-bold uppercase py-2 px-4 transition-all mt-2 w-full text-sm flex items-center justify-center gap-2 ${
                         event.currentTicketsSold >= event.maxCapacity 
@@ -239,9 +272,34 @@ export function Dashboard() {
                         ? 'Emitindo...' 
                         : event.currentTicketsSold >= event.maxCapacity 
                           ? 'Esgotado' 
-                          : 'Garantir Ingresso'
+                          : event.requiresAttachment || event.isPaid 
+                            ? 'Candidatar-se (Anexo / Pago)'
+                            : 'Garantir Ingresso'
                       }
                     </button>
+                  )}
+
+                  {/* Admin Tools: Manage Candidates & TV Mode */}
+                  {userRole !== 'STUDENT' && (
+                    <div className="flex gap-2 border-t-2 border-zinc-800 pt-3 mt-1">
+                      <button
+                        onClick={() => setAdminCandidateEvent(event)}
+                        className="flex-1 bg-zinc-800 text-zinc-50 border-2 border-zinc-50 font-bold uppercase py-1.5 px-2 hover:bg-zinc-700 transition-all text-[11px] flex items-center justify-center gap-1"
+                        title="Gerenciar Candidatos e Presenças"
+                      >
+                        <UserCheck className="w-3.5 h-3.5 text-yellow-400" /> Candidatos
+                      </button>
+
+                      {event.requiresAttachment && (
+                        <button
+                          onClick={() => setTvEvent(event)}
+                          className="bg-yellow-400 text-zinc-950 border-2 border-zinc-950 font-bold uppercase py-1.5 px-2 hover:bg-yellow-300 transition-all text-[11px] flex items-center justify-center gap-1"
+                          title="Modo TV / Datashow HDMI"
+                        >
+                          <Tv className="w-3.5 h-3.5" /> Modo TV
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               )})}
@@ -272,6 +330,7 @@ export function Dashboard() {
         )}
       </main>
 
+      {/* Modals */}
       <CreateEventModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
@@ -282,6 +341,25 @@ export function Dashboard() {
         isOpen={isTicketModalOpen}
         onClose={() => setIsTicketModalOpen(false)}
         ticket={ticketData}
+      />
+
+      <CandidateRegistrationModal
+        isOpen={!!candidateRegEvent}
+        onClose={() => setCandidateRegEvent(null)}
+        event={candidateRegEvent}
+        onSuccess={fetchData}
+      />
+
+      <ManageCandidatesModal
+        isOpen={!!adminCandidateEvent}
+        onClose={() => setAdminCandidateEvent(null)}
+        event={adminCandidateEvent}
+      />
+
+      <TvPresentationModal
+        isOpen={!!tvEvent}
+        onClose={() => setTvEvent(null)}
+        event={tvEvent}
       />
     </div>
   );

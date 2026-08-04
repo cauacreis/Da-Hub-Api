@@ -252,7 +252,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
                   Configure quais comprovantes ou arquivos os candidatos devem enviar:
                 </p>
 
-                {attachments.map((req, idx) => (
+                {attachments.map((req) => (
                   <div key={req.id} className="bg-zinc-950 border-2 border-zinc-50 p-3 flex flex-col md:flex-row gap-2 items-center">
                     <input
                       type="text"
