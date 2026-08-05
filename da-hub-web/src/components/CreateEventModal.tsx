@@ -23,7 +23,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
   const [maxCapacity, setMaxCapacity] = useState('');
   
   const [isPaid, setIsPaid] = useState(false);
-  const [price, setPrice] = useState('0.00');
+  const [price, setPrice] = useState('4,99');
   const [maxTicketsPerUser, setMaxTicketsPerUser] = useState('1');
   const [requiresAttachment, setRequiresAttachment] = useState(false);
   const [attachments, setAttachments] = useState<AttachmentReq[]>([]);
@@ -52,6 +52,29 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
     setAttachments(attachments.map(a => a.id === id ? { ...a, [field]: value } : a));
   };
 
+  const handlePriceChange = (value: string) => {
+    // Permite digitação com vírgula ou ponto e auto-formata caracteres não numéricos
+    const cleaned = value.replace(/[^0-9.,]/g, '');
+    setPrice(cleaned);
+  };
+
+  const handlePriceBlur = () => {
+    if (!price) return;
+    const numeric = parseFloat(price.replace(',', '.'));
+    if (!isNaN(numeric)) {
+      setPrice(numeric.toFixed(2).replace('.', ','));
+    }
+  };
+
+  const handleDateBlur = () => {
+    if (eventDate) {
+      // Se o usuário selecionou apenas a data (YYYY-MM-DD), auto-completa a hora como 19:00
+      if (eventDate.length === 10) {
+        setEventDate(`${eventDate}T19:00`);
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -59,14 +82,35 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
     setIsLoading(true);
 
     try {
+      // Auto-formatação da Data e Hora para o padrão ISO LocalDateTime (YYYY-MM-DDTHH:mm:ss)
+      let formattedDate = eventDate;
+      if (!formattedDate) {
+        throw new Error('Informe a data e hora do evento.');
+      }
+
+      if (formattedDate.length === 10) {
+        formattedDate += 'T19:00:00';
+      } else if (formattedDate.length === 16) {
+        formattedDate += ':00';
+      } else if (!formattedDate.endsWith(':00') && formattedDate.includes('T')) {
+        const parts = formattedDate.split('T');
+        const timeParts = parts[1].split(':');
+        const hh = (timeParts[0] || '19').padStart(2, '0');
+        const mm = (timeParts[1] || '00').padStart(2, '0');
+        formattedDate = `${parts[0]}T${hh}:${mm}:00`;
+      }
+
+      // Auto-formatação do Preço (converte vírgula para ponto decimal)
+      const parsedPrice = isPaid ? (parseFloat(price.replace(',', '.')) || 0) : 0;
+
       const payload = {
         title,
         description,
         category,
-        eventDate: eventDate + ':00',
+        eventDate: formattedDate,
         maxCapacity: parseInt(maxCapacity, 10),
         isPaid,
-        price: isPaid ? parseFloat(price) : 0,
+        price: parsedPrice,
         maxTicketsPerUser: parseInt(maxTicketsPerUser, 10),
         requiresAttachment,
         attachmentRequirementsJson: requiresAttachment ? JSON.stringify(attachments) : null
@@ -83,7 +127,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
         setEventDate('');
         setMaxCapacity('');
         setIsPaid(false);
-        setPrice('0.00');
+        setPrice('4,99');
         setMaxTicketsPerUser('1');
         setRequiresAttachment(false);
         setAttachments([]);
@@ -95,7 +139,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
       if (err.response?.status === 403) {
         setError('Acesso Negado: Apenas a Diretoria pode criar eventos.');
       } else {
-        const msg = typeof err.response?.data === 'string' ? err.response.data : (err.response?.data?.message || 'Erro ao conectar com o servidor.');
+        const msg = typeof err.response?.data === 'string' ? err.response.data : (err.response?.data?.message || err.message || 'Erro ao conectar com o servidor.');
         setError(msg);
       }
     } finally {
@@ -196,11 +240,15 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-zinc-50 font-bold uppercase text-sm">Data e Hora</label>
+            <label className="text-zinc-50 font-bold uppercase text-sm flex items-center justify-between">
+              <span>Data e Hora</span>
+              <span className="text-zinc-400 text-xs font-normal font-sans">(Auto-completa horário se omitido)</span>
+            </label>
             <input
               type="datetime-local"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
+              onBlur={handleDateBlur}
               className="bg-zinc-900 border-4 border-zinc-50 text-zinc-50 p-3 outline-none focus:shadow-neo transition-all font-medium [color-scheme:dark]"
               required
             />
@@ -222,14 +270,17 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
               <div className="flex flex-col gap-1 mt-1 pl-8">
                 <label className="text-yellow-400 font-bold uppercase text-xs">Valor da Inscrição (R$)</label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0.50"
+                  type="text"
                   value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="bg-zinc-950 border-4 border-yellow-400 text-yellow-400 p-3 outline-none focus:shadow-neo transition-all font-bold"
+                  onChange={(e) => handlePriceChange(e.target.value)}
+                  onBlur={handlePriceBlur}
+                  placeholder="Ex: 4,99"
+                  className="bg-zinc-950 border-4 border-yellow-400 text-yellow-400 p-3 outline-none focus:shadow-neo transition-all font-bold text-lg"
                   required={isPaid}
                 />
+                <span className="text-zinc-400 text-[11px] font-medium">
+                  Formatação automática de moeda (aceita vírgula ou ponto)
+                </span>
               </div>
             )}
           </div>
