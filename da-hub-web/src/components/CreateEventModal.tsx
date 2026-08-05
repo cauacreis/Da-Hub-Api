@@ -192,11 +192,24 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
     setWebpConversionSuccess(false);
 
     try {
-      // 1. Converte qualquer arquivo de imagem para .webp no navegador
-      const webpBlob = await convertImageToWebP(file);
-      const webpFile = new File([webpBlob], 'banner.webp', { type: 'image/webp' });
+      let webpFile: File;
+      const isAlreadyWebP = file.type === 'image/webp' || file.name.toLowerCase().endsWith('.webp');
 
-      // 2. Envia a imagem .webp convertida para o backend
+      if (isAlreadyWebP) {
+        // Se já for WebP, envia o arquivo diretamente sem re-converter no canvas
+        webpFile = file;
+      } else {
+        try {
+          // 1. Converte qualquer outro arquivo de imagem para .webp no navegador
+          const webpBlob = await convertImageToWebP(file);
+          webpFile = new File([webpBlob], file.name.replace(/\.[^/.]+$/, '') + '.webp', { type: 'image/webp' });
+        } catch (convErr) {
+          console.warn("Falha na conversão para WebP, enviando arquivo original:", convErr);
+          webpFile = file; // Fallback seguro para o arquivo original se for imagem válida
+        }
+      }
+
+      // 2. Envia a imagem para o backend
       const formData = new FormData();
       formData.append('file', webpFile);
 
@@ -212,8 +225,8 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
       setBannerUrl(uploadedUrl);
       setWebpConversionSuccess(true);
     } catch (err: any) {
-      console.error("Erro ao converter e enviar imagem para WebP", err);
-      setError('Erro ao converter imagem para WebP. Certifique-se de escolher um arquivo de imagem válido.');
+      console.error("Erro ao enviar imagem de banner", err);
+      setError('Erro ao enviar a imagem. Certifique-se de escolher um arquivo de imagem válido.');
     } finally {
       setIsConvertingWebP(false);
     }
