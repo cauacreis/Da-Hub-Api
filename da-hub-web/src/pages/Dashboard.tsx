@@ -42,7 +42,8 @@ export function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [eventToEdit, setEventToEdit] = useState<EventData | null>(null);
 
-  const [ticketData, setTicketData] = useState(null);
+  const [ticketData, setTicketData] = useState<any>(null);
+  const [cancellingTicketId, setCancellingTicketId] = useState<string | null>(null);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [bookingEventId, setBookingEventId] = useState<string | null>(null);
 
@@ -120,12 +121,15 @@ export function Dashboard() {
 
   const handleCancelTicket = async (ticketId: string) => {
     if (!window.confirm('Tem certeza que deseja cancelar sua inscrição?')) return;
+    setCancellingTicketId(ticketId);
     try {
       await api.post(`/tickets/${ticketId}/cancel`);
       fetchData();
     } catch (err: any) {
       const msg = typeof err.response?.data === 'string' ? err.response.data : (err.response?.data?.message || 'Erro ao cancelar inscrição.');
       setError(msg);
+    } finally {
+      setCancellingTicketId(null);
     }
   };
 
@@ -287,10 +291,11 @@ export function Dashboard() {
                         </button>
                         <button 
                           onClick={() => handleCancelTicket(myTicket.ticketId)}
-                          className="bg-zinc-950 text-red-500 border-4 border-red-500 font-bold uppercase py-2 px-2 hover:bg-red-500 hover:text-zinc-950 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-xs flex items-center justify-center"
+                          disabled={cancellingTicketId === myTicket.ticketId}
+                          className="bg-zinc-950 text-red-500 border-4 border-red-500 font-bold uppercase py-2 px-2 hover:bg-red-500 hover:text-zinc-950 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-xs flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Cancelar Inscrição"
                         >
-                          Cancelar
+                          {cancellingTicketId === myTicket.ticketId ? 'Cancelando...' : 'Cancelar'}
                         </button>
                       </div>
                     ) : (
