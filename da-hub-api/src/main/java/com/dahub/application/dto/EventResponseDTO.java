@@ -1,7 +1,5 @@
 package com.dahub.application.dto;
 
-import com.dahub.domain.entity.enums.EventCategory;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 

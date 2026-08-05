@@ -4,6 +4,7 @@ import com.dahub.domain.service.FileUploadService;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +30,7 @@ public class FileController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
         String fileUrl = fileUploadService.storeFile(file);
-        return ResponseEntity.ok(Map.of("url", fileUrl));
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("url", fileUrl));
     }
 
     @GetMapping("/{fileName:.+}")

@@ -1,6 +1,5 @@
 package com.dahub.application.dto;
 
-import com.dahub.domain.entity.enums.EventCategory;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
