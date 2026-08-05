@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Upload, AlertCircle, CheckCircle, QrCode, CreditCard, MessageSquare } from 'lucide-react';
 import { api } from '../services/api';
 import type { EventData, AttachmentRequirement } from '../pages/Dashboard';
@@ -18,6 +18,17 @@ export function CandidateRegistrationModal({ isOpen, onClose, event, onSuccess }
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [paymentData, setPaymentData] = useState<any>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedFiles({});
+      setFileDescriptions({});
+      setIsLoading(false);
+      setError('');
+      setSuccess('');
+      setPaymentData(null);
+    }
+  }, [isOpen, event]);
 
   if (!isOpen || !event) return null;
 
