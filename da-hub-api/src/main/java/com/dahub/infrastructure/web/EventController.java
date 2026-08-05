@@ -27,6 +27,13 @@ public class EventController {
         return ResponseEntity.ok(eventResponse);
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('DIRECTOR', 'VP')")
+    public ResponseEntity<EventResponseDTO> updateEvent(@PathVariable java.util.UUID id, @Valid @RequestBody EventCreateDTO eventCreateDTO) {
+        EventResponseDTO eventResponse = eventService.updateEvent(id, eventCreateDTO);
+        return ResponseEntity.ok(eventResponse);
+    }
+
     @GetMapping
     public ResponseEntity<org.springframework.data.domain.Page<EventResponseDTO>> getAllEvents(org.springframework.data.domain.Pageable pageable) {
         org.springframework.data.domain.Page<EventResponseDTO> events = eventService.findAllEvents(pageable);

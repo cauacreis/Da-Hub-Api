@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Upload, AlertCircle, CheckCircle, QrCode, CreditCard } from 'lucide-react';
 import { api } from '../services/api';
-import { EventData, AttachmentRequirement } from '../pages/Dashboard';
+import type { EventData, AttachmentRequirement } from '../pages/Dashboard';
 
 interface CandidateRegistrationModalProps {
   isOpen: boolean;

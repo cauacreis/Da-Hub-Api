@@ -21,9 +21,8 @@ public class Event {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EventCategory category;
+    private String category;
 
     @Column(name = "event_date", nullable = false)
     private LocalDateTime eventDate;
@@ -51,7 +50,7 @@ public class Event {
 
     public Event() {}
 
-    public Event(UUID id, String title, String description, EventCategory category, LocalDateTime eventDate, Integer maxCapacity, Integer currentTicketsSold, Boolean isPaid, Double price, Integer maxTicketsPerUser, Boolean requiresAttachment, String attachmentRequirementsJson) {
+    public Event(UUID id, String title, String description, String category, LocalDateTime eventDate, Integer maxCapacity, Integer currentTicketsSold, Boolean isPaid, Double price, Integer maxTicketsPerUser, Boolean requiresAttachment, String attachmentRequirementsJson) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -65,6 +64,9 @@ public class Event {
         this.requiresAttachment = requiresAttachment != null ? requiresAttachment : false;
         this.attachmentRequirementsJson = attachmentRequirementsJson;
     }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
     public Boolean getIsPaid() { return isPaid; }
     public void setIsPaid(Boolean isPaid) { this.isPaid = isPaid; }
@@ -90,9 +92,6 @@ public class Event {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public EventCategory getCategory() { return category; }
-    public void setCategory(EventCategory category) { this.category = category; }
-
     public LocalDateTime getEventDate() { return eventDate; }
     public void setEventDate(LocalDateTime eventDate) { this.eventDate = eventDate; }
 
@@ -115,6 +114,10 @@ public class Event {
         return Objects.hashCode(id);
     }
 
+    public Event(UUID id, String title, String description, String category, LocalDateTime eventDate, Integer maxCapacity, Integer currentTicketsSold) {
+        this(id, title, description, category, eventDate, maxCapacity, currentTicketsSold, false, 0.0, 1, false, null);
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -123,21 +126,31 @@ public class Event {
         private UUID id;
         private String title;
         private String description;
-        private EventCategory category;
+        private String category;
         private LocalDateTime eventDate;
         private Integer maxCapacity;
         private Integer currentTicketsSold = 0;
+        private Boolean isPaid = false;
+        private Double price = 0.0;
+        private Integer maxTicketsPerUser = 1;
+        private Boolean requiresAttachment = false;
+        private String attachmentRequirementsJson;
 
         public Builder id(UUID id) { this.id = id; return this; }
         public Builder title(String title) { this.title = title; return this; }
         public Builder description(String description) { this.description = description; return this; }
-        public Builder category(EventCategory category) { this.category = category; return this; }
+        public Builder category(String category) { this.category = category; return this; }
         public Builder eventDate(LocalDateTime eventDate) { this.eventDate = eventDate; return this; }
         public Builder maxCapacity(Integer maxCapacity) { this.maxCapacity = maxCapacity; return this; }
         public Builder currentTicketsSold(Integer currentTicketsSold) { this.currentTicketsSold = currentTicketsSold; return this; }
+        public Builder isPaid(Boolean isPaid) { this.isPaid = isPaid; return this; }
+        public Builder price(Double price) { this.price = price; return this; }
+        public Builder maxTicketsPerUser(Integer maxTicketsPerUser) { this.maxTicketsPerUser = maxTicketsPerUser; return this; }
+        public Builder requiresAttachment(Boolean requiresAttachment) { this.requiresAttachment = requiresAttachment; return this; }
+        public Builder attachmentRequirementsJson(String attachmentRequirementsJson) { this.attachmentRequirementsJson = attachmentRequirementsJson; return this; }
 
         public Event build() {
-            return new Event(id, title, description, category, eventDate, maxCapacity, currentTicketsSold);
+            return new Event(id, title, description, category, eventDate, maxCapacity, currentTicketsSold, isPaid, price, maxTicketsPerUser, requiresAttachment, attachmentRequirementsJson);
         }
     }
 }

@@ -30,7 +30,8 @@ export function Register() {
       // Navigate to login on success
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data || 'Erro ao registrar usuário.');
+      const msg = typeof err.response?.data === 'string' ? err.response.data : (err.response?.data?.message || 'Erro ao registrar usuário.');
+      setError(msg);
     } finally {
       setIsLoading(false);
     }

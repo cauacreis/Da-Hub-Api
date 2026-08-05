@@ -24,7 +24,8 @@ export function Login() {
         navigate('/dashboard');
       }
     } catch (err: any) {
-      setError(err.response?.data || 'Erro ao conectar com o servidor.');
+      const msg = typeof err.response?.data === 'string' ? err.response.data : (err.response?.data?.message || 'Erro ao conectar com o servidor.');
+      setError(msg);
     } finally {
       setIsLoading(false);
     }

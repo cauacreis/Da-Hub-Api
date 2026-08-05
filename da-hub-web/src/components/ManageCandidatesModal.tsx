@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, Search, CheckCircle, XCircle, FileText, Download, Eye, Plus, AlertCircle } from 'lucide-react';
+import { X, Search, Download, Eye, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
-import { EventData } from '../pages/Dashboard';
-import { CandidateAttachmentViewer, AttachmentItem } from './CandidateAttachmentViewer';
+import type { EventData } from '../pages/Dashboard';
+import { CandidateAttachmentViewer } from './CandidateAttachmentViewer';
+import type { AttachmentItem } from './CandidateAttachmentViewer';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 

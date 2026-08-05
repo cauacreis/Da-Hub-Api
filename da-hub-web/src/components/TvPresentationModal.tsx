@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Play, Pause, ChevronLeft, ChevronRight, Maximize, Minimize, Settings, Tv } from 'lucide-react';
 import { api } from '../services/api';
-import { EventData } from '../pages/Dashboard';
-import { AttachmentItem } from './CandidateAttachmentViewer';
+import type { EventData } from '../pages/Dashboard';
+import type { AttachmentItem } from './CandidateAttachmentViewer';
 
 interface SlideItem {
   attachmentId: string;

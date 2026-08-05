@@ -13,3 +13,18 @@ api.interceptors.request.use((config) => {
 }, (error) => {
   return Promise.reject(error);
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.data && typeof error.response.data === 'object') {
+      const data = error.response.data;
+      if (data.message && typeof data.message === 'string') {
+        error.response.data = data.message;
+      } else if (data.error && typeof data.error === 'string') {
+        error.response.data = data.error;
+      }
+    }
+    return Promise.reject(error);
+  }
+);

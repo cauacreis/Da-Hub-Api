@@ -10,7 +10,7 @@ public class EventResponseDTO {
     private UUID id;
     private String title;
     private String description;
-    private EventCategory category;
+    private String category;
     private LocalDateTime eventDate;
     private Integer maxCapacity;
     private Integer currentTicketsSold;
@@ -62,11 +62,11 @@ public class EventResponseDTO {
         this.description = description;
     }
 
-    public EventCategory getCategory() {
+    public String getCategory() {
         return category;
     }
 
-    public void setCategory(EventCategory category) {
+    public void setCategory(String category) {
         this.category = category;
     }
 

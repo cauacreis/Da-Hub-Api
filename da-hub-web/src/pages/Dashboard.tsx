@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, CalendarDays, Users, Tag, Upload, DollarSign, Tv, UserCheck } from 'lucide-react';
+import { LogOut, LayoutDashboard, CalendarDays, Users, Tag, Upload, DollarSign, Tv, UserCheck, Edit } from 'lucide-react';
 import { api } from '../services/api';
 import { CreateEventModal } from '../components/CreateEventModal';
 import { TicketModal } from '../components/TicketModal';
@@ -39,11 +39,13 @@ export function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [eventToEdit, setEventToEdit] = useState<EventData | null>(null);
+
   const [ticketData, setTicketData] = useState(null);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [bookingEventId, setBookingEventId] = useState<string | null>(null);
 
-  // New Modals State
+  // Modals State
   const [candidateRegEvent, setCandidateRegEvent] = useState<EventData | null>(null);
   const [adminCandidateEvent, setAdminCandidateEvent] = useState<EventData | null>(null);
   const [tvEvent, setTvEvent] = useState<EventData | null>(null);
@@ -126,6 +128,16 @@ export function Dashboard() {
     }
   };
 
+  const handleOpenCreateModal = () => {
+    setEventToEdit(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (event: EventData) => {
+    setEventToEdit(event);
+    setIsModalOpen(true);
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('pt-BR', {
       day: '2-digit',
@@ -167,7 +179,7 @@ export function Dashboard() {
           <h2 className="text-3xl font-bold uppercase text-zinc-50 tracking-tighter">Eventos Ativos</h2>
           {userRole !== 'STUDENT' && (
             <button 
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleOpenCreateModal}
               className="bg-zinc-50 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-6 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-sm"
             >
               + Novo Evento Detalhado
@@ -197,6 +209,8 @@ export function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => {
                 const myTicket = myTickets.find(t => t.eventId === event.id && (t.status === 'PAID' || t.status === 'USED' || t.status === 'PENDING_PAYMENT'));
+                const isUnlimited = !event.maxCapacity || event.maxCapacity >= 999999;
+                
                 return (
                 <div key={event.id} className="bg-zinc-900 border-4 border-zinc-50 p-6 flex flex-col gap-4 shadow-neo hover:shadow-neo-hover transition-all group relative">
                   <div className="flex justify-between items-start gap-2">
@@ -236,7 +250,10 @@ export function Dashboard() {
                     </div>
                     <div className="flex items-center gap-2 text-zinc-300 text-sm font-bold">
                       <Users className="w-4 h-4" />
-                      {event.currentTicketsSold} / {event.maxCapacity} Ingressos
+                      {isUnlimited 
+                        ? `${event.currentTicketsSold} / ∞ Ingressos (Ilimitado)` 
+                        : `${event.currentTicketsSold} / ${event.maxCapacity} Ingressos`
+                      }
                     </div>
                   </div>
 
@@ -260,9 +277,9 @@ export function Dashboard() {
                   ) : (
                     <button 
                       onClick={() => handleBookTicketClick(event)}
-                      disabled={event.currentTicketsSold >= event.maxCapacity || bookingEventId === event.id}
+                      disabled={(!isUnlimited && event.currentTicketsSold >= event.maxCapacity) || bookingEventId === event.id}
                       className={`border-4 border-zinc-950 font-bold uppercase py-2 px-4 transition-all mt-2 w-full text-sm flex items-center justify-center gap-2 ${
-                        event.currentTicketsSold >= event.maxCapacity 
+                        !isUnlimited && event.currentTicketsSold >= event.maxCapacity 
                           ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' 
                           : 'bg-zinc-50 text-zinc-950 hover:bg-yellow-400 hover:shadow-neo active:translate-y-1 active:translate-x-1 active:shadow-none'
                       }`}
@@ -270,7 +287,7 @@ export function Dashboard() {
                       <Tag className="w-4 h-4" />
                       {bookingEventId === event.id 
                         ? 'Emitindo...' 
-                        : event.currentTicketsSold >= event.maxCapacity 
+                        : (!isUnlimited && event.currentTicketsSold >= event.maxCapacity)
                           ? 'Esgotado' 
                           : event.requiresAttachment || event.isPaid 
                             ? 'Candidatar-se (Anexo / Pago)'
@@ -279,9 +296,17 @@ export function Dashboard() {
                     </button>
                   )}
 
-                  {/* Admin Tools: Manage Candidates & TV Mode */}
+                  {/* Admin Tools: Manage Candidates, Edit & TV Mode */}
                   {userRole !== 'STUDENT' && (
-                    <div className="flex gap-2 border-t-2 border-zinc-800 pt-3 mt-1">
+                    <div className="flex gap-2 border-t-2 border-zinc-800 pt-3 mt-1 flex-wrap">
+                      <button
+                        onClick={() => handleOpenEditModal(event)}
+                        className="bg-zinc-800 text-yellow-400 border-2 border-yellow-400 font-bold uppercase py-1.5 px-2 hover:bg-yellow-400 hover:text-zinc-950 transition-all text-[11px] flex items-center justify-center gap-1"
+                        title="Editar Informações do Evento"
+                      >
+                        <Edit className="w-3.5 h-3.5" /> Editar
+                      </button>
+
                       <button
                         onClick={() => setAdminCandidateEvent(event)}
                         className="flex-1 bg-zinc-800 text-zinc-50 border-2 border-zinc-50 font-bold uppercase py-1.5 px-2 hover:bg-zinc-700 transition-all text-[11px] flex items-center justify-center gap-1"
@@ -333,8 +358,9 @@ export function Dashboard() {
       {/* Modals */}
       <CreateEventModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={() => { setIsModalOpen(false); setEventToEdit(null); }} 
         onSuccess={fetchData}
+        eventToEdit={eventToEdit}
       />
 
       <TicketModal

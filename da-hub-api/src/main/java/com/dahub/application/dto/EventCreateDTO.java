@@ -15,15 +15,14 @@ public class EventCreateDTO {
 
     private String description;
 
-    @NotNull
-    private EventCategory category;
+    @NotBlank
+    private String category;
 
     @NotNull
     @Future
     private LocalDateTime eventDate;
 
     @NotNull
-    @Positive
     private Integer maxCapacity;
 
     private Boolean isPaid = false;
@@ -66,11 +65,11 @@ public class EventCreateDTO {
         this.description = description;
     }
 
-    public EventCategory getCategory() {
+    public String getCategory() {
         return category;
     }
 
-    public void setCategory(EventCategory category) {
+    public void setCategory(String category) {
         this.category = category;
     }
 

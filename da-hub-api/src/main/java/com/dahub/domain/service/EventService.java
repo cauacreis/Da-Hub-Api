@@ -40,6 +40,25 @@ public class EventService {
         return mapToResponse(event);
     }
 
+    public EventResponseDTO updateEvent(java.util.UUID id, EventCreateDTO dto) {
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado com ID: " + id));
+
+        event.setTitle(dto.getTitle());
+        event.setDescription(dto.getDescription());
+        event.setCategory(dto.getCategory());
+        event.setEventDate(dto.getEventDate());
+        event.setMaxCapacity(dto.getMaxCapacity());
+        event.setIsPaid(dto.getIsPaid() != null ? dto.getIsPaid() : false);
+        event.setPrice(dto.getPrice() != null ? dto.getPrice() : 0.0);
+        event.setMaxTicketsPerUser(dto.getMaxTicketsPerUser() != null ? dto.getMaxTicketsPerUser() : 1);
+        event.setRequiresAttachment(dto.getRequiresAttachment() != null ? dto.getRequiresAttachment() : false);
+        event.setAttachmentRequirementsJson(dto.getAttachmentRequirementsJson());
+
+        event = eventRepository.save(event);
+        return mapToResponse(event);
+    }
+
     public Page<EventResponseDTO> findAllEvents(Pageable pageable) {
         return eventRepository.findAll(pageable)
                 .map(this::mapToResponse);

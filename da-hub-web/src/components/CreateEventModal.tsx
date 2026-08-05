@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, AlertCircle, CheckCircle, Plus, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
+import type { EventData } from '../pages/Dashboard';
 
 interface AttachmentReq {
   id: string;
@@ -13,24 +14,110 @@ interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  eventToEdit?: EventData | null;
 }
 
-export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModalProps) {
+const STANDARD_CATEGORIES = ['EGAMES', 'SYMPOSIUM', 'CULTURE', 'PARTY'];
+
+export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: CreateEventModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('EGAMES');
-  const [eventDate, setEventDate] = useState('');
-  const [maxCapacity, setMaxCapacity] = useState('');
   
+  // Category state
+  const [categoryType, setCategoryType] = useState('EGAMES');
+  const [customCategory, setCustomCategory] = useState('');
+  
+  // Capacity state
+  const [isCapacityUnlimited, setIsCapacityUnlimited] = useState(false);
+  const [maxCapacity, setMaxCapacity] = useState('100');
+  
+  // Max tickets per user state
+  const [isTicketsPerUserUnlimited, setIsTicketsPerUserUnlimited] = useState(false);
+  const [maxTicketsPerUser, setMaxTicketsPerUser] = useState('1');
+  
+  const [eventDate, setEventDate] = useState('');
+  
+  // Payment & Attachments
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState('4,99');
-  const [maxTicketsPerUser, setMaxTicketsPerUser] = useState('1');
   const [requiresAttachment, setRequiresAttachment] = useState(false);
   const [attachments, setAttachments] = useState<AttachmentReq[]>([]);
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    if (eventToEdit) {
+      setTitle(eventToEdit.title || '');
+      setDescription(eventToEdit.description || '');
+      
+      // Category population
+      if (STANDARD_CATEGORIES.includes(eventToEdit.category)) {
+        setCategoryType(eventToEdit.category);
+        setCustomCategory('');
+      } else {
+        setCategoryType('CUSTOM');
+        setCustomCategory(eventToEdit.category || '');
+      }
+
+      // Capacity population
+      if (!eventToEdit.maxCapacity || eventToEdit.maxCapacity >= 999999) {
+        setIsCapacityUnlimited(true);
+        setMaxCapacity('999999');
+      } else {
+        setIsCapacityUnlimited(false);
+        setMaxCapacity(String(eventToEdit.maxCapacity));
+      }
+
+      // Max tickets per user population
+      if (!eventToEdit.maxTicketsPerUser || eventToEdit.maxTicketsPerUser >= 999999) {
+        setIsTicketsPerUserUnlimited(true);
+        setMaxTicketsPerUser('999999');
+      } else {
+        setIsTicketsPerUserUnlimited(false);
+        setMaxTicketsPerUser(String(eventToEdit.maxTicketsPerUser));
+      }
+
+      // Date population (formats YYYY-MM-DDTHH:mm)
+      if (eventToEdit.eventDate) {
+        setEventDate(eventToEdit.eventDate.substring(0, 16));
+      } else {
+        setEventDate('');
+      }
+
+      // Paid population
+      setIsPaid(!!eventToEdit.isPaid);
+      setPrice(eventToEdit.price ? eventToEdit.price.toFixed(2).replace('.', ',') : '4,99');
+
+      // Attachments population
+      setRequiresAttachment(!!eventToEdit.requiresAttachment);
+      if (eventToEdit.attachmentRequirementsJson) {
+        try {
+          setAttachments(JSON.parse(eventToEdit.attachmentRequirementsJson));
+        } catch {
+          setAttachments([]);
+        }
+      } else {
+        setAttachments([]);
+      }
+    } else {
+      // Reset form for creation mode
+      setTitle('');
+      setDescription('');
+      setCategoryType('EGAMES');
+      setCustomCategory('');
+      setIsCapacityUnlimited(false);
+      setMaxCapacity('100');
+      setIsTicketsPerUserUnlimited(false);
+      setMaxTicketsPerUser('1');
+      setEventDate('');
+      setIsPaid(false);
+      setPrice('4,99');
+      setRequiresAttachment(false);
+      setAttachments([]);
+    }
+  }, [eventToEdit, isOpen]);
 
   if (!isOpen) return null;
 
@@ -53,7 +140,6 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
   };
 
   const handlePriceChange = (value: string) => {
-    // Permite digitação com vírgula ou ponto e auto-formata caracteres não numéricos
     const cleaned = value.replace(/[^0-9.,]/g, '');
     setPrice(cleaned);
   };
@@ -67,11 +153,8 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
   };
 
   const handleDateBlur = () => {
-    if (eventDate) {
-      // Se o usuário selecionou apenas a data (YYYY-MM-DD), auto-completa a hora como 19:00
-      if (eventDate.length === 10) {
-        setEventDate(`${eventDate}T19:00`);
-      }
+    if (eventDate && eventDate.length === 10) {
+      setEventDate(`${eventDate}T19:00`);
     }
   };
 
@@ -82,7 +165,13 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
     setIsLoading(true);
 
     try {
-      // Auto-formatação da Data e Hora para o padrão ISO LocalDateTime (YYYY-MM-DDTHH:mm:ss)
+      // Category resolution
+      const finalCategory = categoryType === 'CUSTOM' ? customCategory.trim() : categoryType;
+      if (!finalCategory) {
+        throw new Error('Informe a categoria do evento.');
+      }
+
+      // Date resolution
       let formattedDate = eventDate;
       if (!formattedDate) {
         throw new Error('Informe a data e hora do evento.');
@@ -100,46 +189,42 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
         formattedDate = `${parts[0]}T${hh}:${mm}:00`;
       }
 
-      // Auto-formatação do Preço (converte vírgula para ponto decimal)
       const parsedPrice = isPaid ? (parseFloat(price.replace(',', '.')) || 0) : 0;
+      const finalCapacity = isCapacityUnlimited ? 999999 : parseInt(maxCapacity, 10);
+      const finalMaxTickets = isTicketsPerUserUnlimited ? 999999 : parseInt(maxTicketsPerUser, 10);
 
       const payload = {
         title,
         description,
-        category,
+        category: finalCategory,
         eventDate: formattedDate,
-        maxCapacity: parseInt(maxCapacity, 10),
+        maxCapacity: finalCapacity,
         isPaid,
         price: parsedPrice,
-        maxTicketsPerUser: parseInt(maxTicketsPerUser, 10),
+        maxTicketsPerUser: finalMaxTickets,
         requiresAttachment,
         attachmentRequirementsJson: requiresAttachment ? JSON.stringify(attachments) : null
       };
 
-      await api.post('/events', payload);
+      if (eventToEdit) {
+        await api.put(`/events/${eventToEdit.id}`, payload);
+        setSuccess('Evento atualizado com sucesso!');
+      } else {
+        await api.post('/events', payload);
+        setSuccess('Evento criado com sucesso!');
+      }
       
-      setSuccess('Evento criado com sucesso!');
       setTimeout(() => {
         setSuccess('');
-        setTitle('');
-        setDescription('');
-        setCategory('EGAMES');
-        setEventDate('');
-        setMaxCapacity('');
-        setIsPaid(false);
-        setPrice('4,99');
-        setMaxTicketsPerUser('1');
-        setRequiresAttachment(false);
-        setAttachments([]);
         onSuccess();
         onClose();
-      }, 1500);
+      }, 1200);
 
     } catch (err: any) {
       if (err.response?.status === 403) {
-        setError('Acesso Negado: Apenas a Diretoria pode criar eventos.');
+        setError('Acesso Negado: Apenas a Diretoria pode criar ou editar eventos.');
       } else {
-        const msg = typeof err.response?.data === 'string' ? err.response.data : (err.response?.data?.message || err.message || 'Erro ao conectar com o servidor.');
+        const msg = typeof err.response?.data === 'string' ? err.response.data : (err.response?.data?.message || err.message || 'Erro ao salvar evento.');
         setError(msg);
       }
     } finally {
@@ -158,7 +243,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
         </button>
 
         <h2 className="text-2xl font-bold uppercase text-zinc-50 tracking-tighter mb-6 border-b-4 border-zinc-50 pb-2">
-          Criar Novo Evento Detalhado
+          {eventToEdit ? 'Editar Evento' : 'Criar Novo Evento Detalhado'}
         </h2>
 
         {error && (
@@ -176,6 +261,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Título */}
           <div className="flex flex-col gap-1">
             <label className="text-zinc-50 font-bold uppercase text-sm">Título do Evento</label>
             <input
@@ -188,6 +274,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
             />
           </div>
 
+          {/* Descrição */}
           <div className="flex flex-col gap-1">
             <label className="text-zinc-50 font-bold uppercase text-sm">Descrição</label>
             <textarea
@@ -198,47 +285,132 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-zinc-50 font-bold uppercase text-sm">Categoria</label>
+          {/* Categoria com opção de Personalizada */}
+          <div className="flex flex-col gap-1 border-4 border-zinc-800 p-4 bg-zinc-900">
+            <label className="text-zinc-50 font-bold uppercase text-sm">Categoria do Evento</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="bg-zinc-900 border-4 border-zinc-50 text-zinc-50 p-3 outline-none focus:shadow-neo transition-all font-medium uppercase"
+                value={categoryType}
+                onChange={(e) => setCategoryType(e.target.value)}
+                className="bg-zinc-950 border-4 border-zinc-50 text-zinc-50 p-3 outline-none focus:shadow-neo transition-all font-bold uppercase"
                 required
               >
                 <option value="EGAMES">E-Games</option>
                 <option value="SYMPOSIUM">Simpósio</option>
                 <option value="CULTURE">Cultura</option>
                 <option value="PARTY">Festa</option>
+                <option value="CUSTOM">✏️ Outra / Personalizada</option>
               </select>
-            </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-zinc-50 font-bold uppercase text-sm">Capacidade</label>
-              <input
-                type="number"
-                min="1"
-                value={maxCapacity}
-                onChange={(e) => setMaxCapacity(e.target.value)}
-                className="bg-zinc-900 border-4 border-zinc-50 text-zinc-50 p-3 outline-none focus:shadow-neo transition-all font-medium"
-                required
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-zinc-50 font-bold uppercase text-sm">Máx Ingressos/Aluno</label>
-              <input
-                type="number"
-                min="1"
-                value={maxTicketsPerUser}
-                onChange={(e) => setMaxTicketsPerUser(e.target.value)}
-                className="bg-zinc-900 border-4 border-zinc-50 text-zinc-50 p-3 outline-none focus:shadow-neo transition-all font-medium"
-                required
-              />
+              {categoryType === 'CUSTOM' && (
+                <input
+                  type="text"
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  placeholder="Digite sua categoria personalizada..."
+                  className="bg-zinc-950 border-4 border-yellow-400 text-yellow-400 p-3 outline-none focus:shadow-neo transition-all font-bold uppercase"
+                  required
+                />
+              )}
             </div>
           </div>
 
+          {/* Capacidade (Limite ou Infinito) & Máx Ingressos/Aluno (Com limite ou Sem limite) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Capacidade */}
+            <div className="border-4 border-zinc-800 p-4 bg-zinc-900 flex flex-col gap-2">
+              <label className="text-zinc-50 font-bold uppercase text-sm">Capacidade Total</label>
+              
+              <div className="flex gap-2 mb-1">
+                <button
+                  type="button"
+                  onClick={() => setIsCapacityUnlimited(false)}
+                  className={`flex-1 py-1.5 px-2 font-bold uppercase text-xs border-2 transition-all ${
+                    !isCapacityUnlimited 
+                      ? 'bg-yellow-400 text-zinc-950 border-zinc-950 shadow-neo' 
+                      : 'bg-zinc-950 text-zinc-400 border-zinc-700'
+                  }`}
+                >
+                  Com Limite
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsCapacityUnlimited(true)}
+                  className={`flex-1 py-1.5 px-2 font-bold uppercase text-xs border-2 transition-all ${
+                    isCapacityUnlimited 
+                      ? 'bg-yellow-400 text-zinc-950 border-zinc-950 shadow-neo' 
+                      : 'bg-zinc-950 text-zinc-400 border-zinc-700'
+                  }`}
+                >
+                  Sem Limite (∞)
+                </button>
+              </div>
+
+              {!isCapacityUnlimited ? (
+                <input
+                  type="number"
+                  min="1"
+                  value={maxCapacity}
+                  onChange={(e) => setMaxCapacity(e.target.value)}
+                  className="bg-zinc-950 border-4 border-zinc-50 text-zinc-50 p-2.5 outline-none font-bold"
+                  placeholder="Ex: 100"
+                  required={!isCapacityUnlimited}
+                />
+              ) : (
+                <div className="bg-zinc-950 border-4 border-yellow-400 text-yellow-400 p-2.5 font-bold uppercase text-center text-sm">
+                  Inscrições Ilimitadas (∞)
+                </div>
+              )}
+            </div>
+
+            {/* Máx Ingressos por Aluno */}
+            <div className="border-4 border-zinc-800 p-4 bg-zinc-900 flex flex-col gap-2">
+              <label className="text-zinc-50 font-bold uppercase text-sm">Ingressos por Aluno</label>
+              
+              <div className="flex gap-2 mb-1">
+                <button
+                  type="button"
+                  onClick={() => setIsTicketsPerUserUnlimited(false)}
+                  className={`flex-1 py-1.5 px-2 font-bold uppercase text-xs border-2 transition-all ${
+                    !isTicketsPerUserUnlimited 
+                      ? 'bg-yellow-400 text-zinc-950 border-zinc-950 shadow-neo' 
+                      : 'bg-zinc-950 text-zinc-400 border-zinc-700'
+                  }`}
+                >
+                  Com Limite
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsTicketsPerUserUnlimited(true)}
+                  className={`flex-1 py-1.5 px-2 font-bold uppercase text-xs border-2 transition-all ${
+                    isTicketsPerUserUnlimited 
+                      ? 'bg-yellow-400 text-zinc-950 border-zinc-950 shadow-neo' 
+                      : 'bg-zinc-950 text-zinc-400 border-zinc-700'
+                  }`}
+                >
+                  Sem Limite (∞)
+                </button>
+              </div>
+
+              {!isTicketsPerUserUnlimited ? (
+                <input
+                  type="number"
+                  min="1"
+                  value={maxTicketsPerUser}
+                  onChange={(e) => setMaxTicketsPerUser(e.target.value)}
+                  className="bg-zinc-950 border-4 border-zinc-50 text-zinc-50 p-2.5 outline-none font-bold"
+                  placeholder="Ex: 1"
+                  required={!isTicketsPerUserUnlimited}
+                />
+              ) : (
+                <div className="bg-zinc-950 border-4 border-yellow-400 text-yellow-400 p-2.5 font-bold uppercase text-center text-sm">
+                  Sem Limite por Aluno (∞)
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Data e Hora */}
           <div className="flex flex-col gap-1">
             <label className="text-zinc-50 font-bold uppercase text-sm flex items-center justify-between">
               <span>Data e Hora</span>
@@ -350,7 +522,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess }: CreateEventModa
             disabled={isLoading || !!success}
             className="bg-zinc-50 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-4 px-6 hover:shadow-neo transition-all mt-2 w-full active:translate-y-1 active:translate-x-1 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed text-lg"
           >
-            {isLoading ? 'Implantando Evento...' : 'Criar Evento Completo'}
+            {isLoading ? 'Salvando Evento...' : eventToEdit ? 'Salvar Alterações do Evento' : 'Criar Evento Completo'}
           </button>
         </form>
       </div>
