@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, AlertCircle, CheckCircle, Plus, Trash2 } from 'lucide-react';
+import { X, AlertCircle, CheckCircle, Plus, Trash2, Image, Calendar, Clock } from 'lucide-react';
 import { api } from '../services/api';
 import type { EventData } from '../pages/Dashboard';
 
@@ -19,6 +19,13 @@ interface CreateEventModalProps {
 
 const STANDARD_CATEGORIES = ['EGAMES', 'SYMPOSIUM', 'CULTURE', 'PARTY'];
 
+const PRESET_BANNERS = [
+  { name: 'E-Games', url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80' },
+  { name: 'Simpósio / Palestra', url: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=80' },
+  { name: 'Artes & Cultura', url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80' },
+  { name: 'Festa Universitária', url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80' },
+];
+
 export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: CreateEventModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -35,8 +42,13 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
   const [isTicketsPerUserUnlimited, setIsTicketsPerUserUnlimited] = useState(false);
   const [maxTicketsPerUser, setMaxTicketsPerUser] = useState('1');
   
-  const [eventDate, setEventDate] = useState('');
+  // Separated Date and Time inputs for 100% reliable auto-completion
+  const [eventDateOnly, setEventDateOnly] = useState('');
+  const [eventTimeOnly, setEventTimeOnly] = useState('19:00'); // Default time 19:00 (7 PM)
   
+  // Banner / Photo URL state
+  const [bannerUrl, setBannerUrl] = useState('');
+
   // Payment & Attachments
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState('4,99');
@@ -51,6 +63,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
     if (eventToEdit) {
       setTitle(eventToEdit.title || '');
       setDescription(eventToEdit.description || '');
+      setBannerUrl(eventToEdit.bannerUrl || '');
       
       // Category population
       if (STANDARD_CATEGORIES.includes(eventToEdit.category)) {
@@ -79,11 +92,14 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
         setMaxTicketsPerUser(String(eventToEdit.maxTicketsPerUser));
       }
 
-      // Date population (formats YYYY-MM-DDTHH:mm)
+      // Date & Time population
       if (eventToEdit.eventDate) {
-        setEventDate(eventToEdit.eventDate.substring(0, 16));
+        const parts = eventToEdit.eventDate.split('T');
+        setEventDateOnly(parts[0] || '');
+        setEventTimeOnly(parts[1] ? parts[1].substring(0, 5) : '19:00');
       } else {
-        setEventDate('');
+        setEventDateOnly('');
+        setEventTimeOnly('19:00');
       }
 
       // Paid population
@@ -102,7 +118,11 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
         setAttachments([]);
       }
     } else {
-      // Reset form for creation mode
+      // Default creation values
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const defaultDateStr = tomorrow.toISOString().split('T')[0];
+
       setTitle('');
       setDescription('');
       setCategoryType('EGAMES');
@@ -111,7 +131,9 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
       setMaxCapacity('100');
       setIsTicketsPerUserUnlimited(false);
       setMaxTicketsPerUser('1');
-      setEventDate('');
+      setEventDateOnly(defaultDateStr);
+      setEventTimeOnly('19:00'); // Default auto-completed time
+      setBannerUrl('https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80');
       setIsPaid(false);
       setPrice('4,99');
       setRequiresAttachment(false);
@@ -152,12 +174,6 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
     }
   };
 
-  const handleDateBlur = () => {
-    if (eventDate && eventDate.length === 10) {
-      setEventDate(`${eventDate}T19:00`);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -165,29 +181,18 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
     setIsLoading(true);
 
     try {
-      // Category resolution
       const finalCategory = categoryType === 'CUSTOM' ? customCategory.trim() : categoryType;
       if (!finalCategory) {
         throw new Error('Informe a categoria do evento.');
       }
 
-      // Date resolution
-      let formattedDate = eventDate;
-      if (!formattedDate) {
-        throw new Error('Informe a data e hora do evento.');
+      if (!eventDateOnly) {
+        throw new Error('Selecione a data do evento.');
       }
 
-      if (formattedDate.length === 10) {
-        formattedDate += 'T19:00:00';
-      } else if (formattedDate.length === 16) {
-        formattedDate += ':00';
-      } else if (!formattedDate.endsWith(':00') && formattedDate.includes('T')) {
-        const parts = formattedDate.split('T');
-        const timeParts = parts[1].split(':');
-        const hh = (timeParts[0] || '19').padStart(2, '0');
-        const mm = (timeParts[1] || '00').padStart(2, '0');
-        formattedDate = `${parts[0]}T${hh}:${mm}:00`;
-      }
+      // Auto-completed ISO LocalDateTime String
+      const finalTime = eventTimeOnly ? eventTimeOnly : '19:00';
+      const formattedDate = `${eventDateOnly}T${finalTime}:00`;
 
       const parsedPrice = isPaid ? (parseFloat(price.replace(',', '.')) || 0) : 0;
       const finalCapacity = isCapacityUnlimited ? 999999 : parseInt(maxCapacity, 10);
@@ -203,7 +208,8 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
         price: parsedPrice,
         maxTicketsPerUser: finalMaxTickets,
         requiresAttachment,
-        attachmentRequirementsJson: requiresAttachment ? JSON.stringify(attachments) : null
+        attachmentRequirementsJson: requiresAttachment ? JSON.stringify(attachments) : null,
+        bannerUrl: bannerUrl.trim() || null
       };
 
       if (eventToEdit) {
@@ -237,7 +243,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
       <div className="bg-zinc-950 border-4 border-zinc-50 p-6 w-full max-w-2xl shadow-neo relative max-h-[90vh] overflow-y-auto">
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 text-zinc-50 hover:text-red-500 transition-colors"
+          className="absolute top-4 right-4 text-zinc-50 hover:text-red-500 transition-colors z-10"
         >
           <X className="w-8 h-8" />
         </button>
@@ -261,6 +267,52 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Banner do Evento (Foto de Capa) */}
+          <div className="border-4 border-zinc-800 p-4 bg-zinc-900 flex flex-col gap-3">
+            <label className="text-zinc-50 font-bold uppercase text-sm flex items-center gap-2">
+              <Image className="w-5 h-5 text-yellow-400" />
+              Banner / Foto de Capa do Evento (URL da Imagem)
+            </label>
+
+            <input
+              type="text"
+              value={bannerUrl}
+              onChange={(e) => setBannerUrl(e.target.value)}
+              placeholder="https://exemplo.com/minha-foto-banner.jpg"
+              className="bg-zinc-950 border-4 border-zinc-50 text-zinc-50 p-3 outline-none focus:border-yellow-400 font-mono text-xs"
+            />
+
+            {/* Presets Rápidos */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-zinc-400 text-xs font-bold uppercase">Sugestões de Capa:</span>
+              {PRESET_BANNERS.map((preset) => (
+                <button
+                  type="button"
+                  key={preset.name}
+                  onClick={() => setBannerUrl(preset.url)}
+                  className="bg-zinc-800 text-zinc-300 border border-zinc-500 text-[10px] font-bold px-2 py-1 hover:bg-yellow-400 hover:text-zinc-950 transition-colors uppercase"
+                >
+                  {preset.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Banner Preview */}
+            {bannerUrl && (
+              <div className="border-2 border-zinc-50 mt-1 relative overflow-hidden h-32 bg-zinc-950">
+                <img 
+                  src={bannerUrl} 
+                  alt="Pré-visualização do Banner" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                />
+                <span className="absolute bottom-2 right-2 bg-zinc-950 text-yellow-400 text-[10px] font-bold px-2 py-0.5 border border-yellow-400 uppercase">
+                  Pré-visualização da Capa
+                </span>
+              </div>
+            )}
+          </div>
+
           {/* Título */}
           <div className="flex flex-col gap-1">
             <label className="text-zinc-50 font-bold uppercase text-sm">Título do Evento</label>
@@ -315,7 +367,48 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
             </div>
           </div>
 
-          {/* Capacidade (Limite ou Infinito) & Máx Ingressos/Aluno (Com limite ou Sem limite) */}
+          {/* Data e Hora com Auto-Completar de 100% de Garantia */}
+          <div className="border-4 border-zinc-800 p-4 bg-zinc-900 flex flex-col gap-2">
+            <label className="text-zinc-50 font-bold uppercase text-sm flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-yellow-400" />
+                Data e Horário do Evento
+              </span>
+              <span className="text-yellow-400 text-xs font-bold">
+                ✓ Horário auto-completado em 19:00
+              </span>
+            </label>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-zinc-400 text-xs font-bold uppercase flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" /> Dia do Evento
+                </label>
+                <input
+                  type="date"
+                  value={eventDateOnly}
+                  onChange={(e) => setEventDateOnly(e.target.value)}
+                  className="bg-zinc-950 border-4 border-zinc-50 text-zinc-50 p-2.5 outline-none font-bold uppercase [color-scheme:dark]"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-zinc-400 text-xs font-bold uppercase flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" /> Horário (Padrão: 19:00)
+                </label>
+                <input
+                  type="time"
+                  value={eventTimeOnly}
+                  onChange={(e) => setEventTimeOnly(e.target.value)}
+                  className="bg-zinc-950 border-4 border-zinc-50 text-zinc-50 p-2.5 outline-none font-bold [color-scheme:dark]"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Capacidade (Limite ou Infinito) & Máx Ingressos/Aluno */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Capacidade */}
             <div className="border-4 border-zinc-800 p-4 bg-zinc-900 flex flex-col gap-2">
@@ -408,22 +501,6 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Data e Hora */}
-          <div className="flex flex-col gap-1">
-            <label className="text-zinc-50 font-bold uppercase text-sm flex items-center justify-between">
-              <span>Data e Hora</span>
-              <span className="text-zinc-400 text-xs font-normal font-sans">(Auto-completa horário se omitido)</span>
-            </label>
-            <input
-              type="datetime-local"
-              value={eventDate}
-              onChange={(e) => setEventDate(e.target.value)}
-              onBlur={handleDateBlur}
-              className="bg-zinc-900 border-4 border-zinc-50 text-zinc-50 p-3 outline-none focus:shadow-neo transition-all font-medium [color-scheme:dark]"
-              required
-            />
           </div>
 
           {/* Configurações de Pagamento (Mercado Pago) */}

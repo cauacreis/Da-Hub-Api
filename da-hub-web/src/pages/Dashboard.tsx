@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, CalendarDays, Users, Tag, Upload, DollarSign, Tv, UserCheck, Edit } from 'lucide-react';
+import { LogOut, LayoutDashboard, CalendarDays, Users, Tag, Upload, DollarSign, Tv, UserCheck, Edit, Image } from 'lucide-react';
 import { api } from '../services/api';
 import { CreateEventModal } from '../components/CreateEventModal';
 import { TicketModal } from '../components/TicketModal';
@@ -28,6 +28,7 @@ export interface EventData {
   maxTicketsPerUser?: number;
   requiresAttachment?: boolean;
   attachmentRequirementsJson?: string;
+  bannerUrl?: string;
 }
 
 export function Dashboard() {
@@ -212,120 +213,139 @@ export function Dashboard() {
                 const isUnlimited = !event.maxCapacity || event.maxCapacity >= 999999;
                 
                 return (
-                <div key={event.id} className="bg-zinc-900 border-4 border-zinc-50 p-6 flex flex-col gap-4 shadow-neo hover:shadow-neo-hover transition-all group relative">
-                  <div className="flex justify-between items-start gap-2">
-                    <h3 className="text-xl font-bold uppercase text-zinc-50 group-hover:text-yellow-400 transition-colors line-clamp-2">
-                      {event.title}
-                    </h3>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="bg-zinc-800 text-xs font-bold px-2 py-1 border-2 border-zinc-50 text-zinc-50 uppercase whitespace-nowrap">
+                <div key={event.id} className="bg-zinc-900 border-4 border-zinc-50 flex flex-col shadow-neo hover:shadow-neo-hover transition-all group relative overflow-hidden">
+                  {/* Event Banner Header */}
+                  <div className="h-44 w-full bg-zinc-950 border-b-4 border-zinc-50 overflow-hidden relative flex items-center justify-center">
+                    {event.bannerUrl ? (
+                      <img 
+                        src={event.bannerUrl} 
+                        alt={event.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-950 flex flex-col items-center justify-center gap-2">
+                        <Image className="w-12 h-12 text-zinc-700" />
+                        <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">DA Hub Event</span>
+                      </div>
+                    )}
+                    
+                    {/* Category & Price Badge overlay on top right */}
+                    <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+                      <span className="bg-zinc-950/90 text-xs font-bold px-2 py-1 border-2 border-zinc-50 text-zinc-50 uppercase whitespace-nowrap backdrop-blur-sm shadow-neo">
                         {event.category}
                       </span>
                       {event.isPaid ? (
-                        <span className="bg-yellow-400 text-zinc-950 text-[10px] font-bold px-2 py-0.5 border-2 border-zinc-950 uppercase flex items-center gap-0.5">
+                        <span className="bg-yellow-400 text-zinc-950 text-[10px] font-bold px-2 py-0.5 border-2 border-zinc-950 uppercase flex items-center gap-0.5 shadow-neo">
                           <DollarSign className="w-3 h-3" /> R$ {event.price?.toFixed(2)}
                         </span>
                       ) : (
-                        <span className="bg-green-500 text-zinc-950 text-[10px] font-bold px-2 py-0.5 border-2 border-zinc-950 uppercase">
+                        <span className="bg-green-500 text-zinc-950 text-[10px] font-bold px-2 py-0.5 border-2 border-zinc-950 uppercase shadow-neo">
                           Gratuito
                         </span>
                       )}
                     </div>
                   </div>
-                  
-                  <p className="text-zinc-400 text-sm font-medium line-clamp-3 flex-1">
-                    {event.description}
-                  </p>
 
-                  {event.requiresAttachment && (
-                    <div className="bg-zinc-950 border-2 border-zinc-700 p-2 text-xs font-bold text-yellow-400 uppercase flex items-center gap-1">
-                      <Upload className="w-4 h-4" /> Exige Anexo de Comprovante / Arte
+                  <div className="p-6 flex flex-col gap-4 flex-1">
+                    <h3 className="text-xl font-bold uppercase text-zinc-50 group-hover:text-yellow-400 transition-colors line-clamp-2">
+                      {event.title}
+                    </h3>
+
+                    <p className="text-zinc-400 text-sm font-medium line-clamp-3 flex-1">
+                      {event.description}
+                    </p>
+
+                    {event.requiresAttachment && (
+                      <div className="bg-zinc-950 border-2 border-zinc-700 p-2 text-xs font-bold text-yellow-400 uppercase flex items-center gap-1">
+                        <Upload className="w-4 h-4" /> Exige Anexo de Comprovante / Arte
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-2 mt-2 pt-4 border-t-2 border-zinc-800">
+                      <div className="flex items-center gap-2 text-zinc-300 text-sm font-bold">
+                        <CalendarDays className="w-4 h-4" />
+                        {formatDate(event.eventDate)}
+                      </div>
+                      <div className="flex items-center gap-2 text-zinc-300 text-sm font-bold">
+                        <Users className="w-4 h-4" />
+                        {isUnlimited 
+                          ? `${event.currentTicketsSold} / ∞ Ingressos (Ilimitado)` 
+                          : `${event.currentTicketsSold} / ${event.maxCapacity} Ingressos`
+                        }
+                      </div>
                     </div>
-                  )}
 
-                  <div className="flex flex-col gap-2 mt-2 pt-4 border-t-2 border-zinc-800">
-                    <div className="flex items-center gap-2 text-zinc-300 text-sm font-bold">
-                      <CalendarDays className="w-4 h-4" />
-                      {formatDate(event.eventDate)}
-                    </div>
-                    <div className="flex items-center gap-2 text-zinc-300 text-sm font-bold">
-                      <Users className="w-4 h-4" />
-                      {isUnlimited 
-                        ? `${event.currentTicketsSold} / ∞ Ingressos (Ilimitado)` 
-                        : `${event.currentTicketsSold} / ${event.maxCapacity} Ingressos`
-                      }
-                    </div>
-                  </div>
-
-                  {/* Student Ticket Action */}
-                  {myTicket ? (
-                    <div className="flex gap-2 mt-2">
-                      <button 
-                        onClick={() => { setTicketData(myTicket); setIsTicketModalOpen(true); }}
-                        className="flex-1 bg-yellow-400 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-2 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-xs flex items-center justify-center gap-1"
-                      >
-                        <Tag className="w-3 h-3" /> Ver Ingresso
-                      </button>
-                      <button 
-                        onClick={() => handleCancelTicket(myTicket.ticketId)}
-                        className="bg-zinc-950 text-red-500 border-4 border-red-500 font-bold uppercase py-2 px-2 hover:bg-red-500 hover:text-zinc-950 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-xs flex items-center justify-center"
-                        title="Cancelar Inscrição"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={() => handleBookTicketClick(event)}
-                      disabled={(!isUnlimited && event.currentTicketsSold >= event.maxCapacity) || bookingEventId === event.id}
-                      className={`border-4 border-zinc-950 font-bold uppercase py-2 px-4 transition-all mt-2 w-full text-sm flex items-center justify-center gap-2 ${
-                        !isUnlimited && event.currentTicketsSold >= event.maxCapacity 
-                          ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' 
-                          : 'bg-zinc-50 text-zinc-950 hover:bg-yellow-400 hover:shadow-neo active:translate-y-1 active:translate-x-1 active:shadow-none'
-                      }`}
-                    >
-                      <Tag className="w-4 h-4" />
-                      {bookingEventId === event.id 
-                        ? 'Emitindo...' 
-                        : (!isUnlimited && event.currentTicketsSold >= event.maxCapacity)
-                          ? 'Esgotado' 
-                          : event.requiresAttachment || event.isPaid 
-                            ? 'Candidatar-se (Anexo / Pago)'
-                            : 'Garantir Ingresso'
-                      }
-                    </button>
-                  )}
-
-                  {/* Admin Tools: Manage Candidates, Edit & TV Mode */}
-                  {userRole !== 'STUDENT' && (
-                    <div className="flex gap-2 border-t-2 border-zinc-800 pt-3 mt-1 flex-wrap">
-                      <button
-                        onClick={() => handleOpenEditModal(event)}
-                        className="bg-zinc-800 text-yellow-400 border-2 border-yellow-400 font-bold uppercase py-1.5 px-2 hover:bg-yellow-400 hover:text-zinc-950 transition-all text-[11px] flex items-center justify-center gap-1"
-                        title="Editar Informações do Evento"
-                      >
-                        <Edit className="w-3.5 h-3.5" /> Editar
-                      </button>
-
-                      <button
-                        onClick={() => setAdminCandidateEvent(event)}
-                        className="flex-1 bg-zinc-800 text-zinc-50 border-2 border-zinc-50 font-bold uppercase py-1.5 px-2 hover:bg-zinc-700 transition-all text-[11px] flex items-center justify-center gap-1"
-                        title="Gerenciar Candidatos e Presenças"
-                      >
-                        <UserCheck className="w-3.5 h-3.5 text-yellow-400" /> Candidatos
-                      </button>
-
-                      {event.requiresAttachment && (
-                        <button
-                          onClick={() => setTvEvent(event)}
-                          className="bg-yellow-400 text-zinc-950 border-2 border-zinc-950 font-bold uppercase py-1.5 px-2 hover:bg-yellow-300 transition-all text-[11px] flex items-center justify-center gap-1"
-                          title="Modo TV / Datashow HDMI"
+                    {/* Student Ticket Action */}
+                    {myTicket ? (
+                      <div className="flex gap-2 mt-2">
+                        <button 
+                          onClick={() => { setTicketData(myTicket); setIsTicketModalOpen(true); }}
+                          className="flex-1 bg-yellow-400 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-2 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-xs flex items-center justify-center gap-1"
                         >
-                          <Tv className="w-3.5 h-3.5" /> Modo TV
+                          <Tag className="w-3 h-3" /> Ver Ingresso
                         </button>
-                      )}
-                    </div>
-                  )}
+                        <button 
+                          onClick={() => handleCancelTicket(myTicket.ticketId)}
+                          className="bg-zinc-950 text-red-500 border-4 border-red-500 font-bold uppercase py-2 px-2 hover:bg-red-500 hover:text-zinc-950 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-xs flex items-center justify-center"
+                          title="Cancelar Inscrição"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => handleBookTicketClick(event)}
+                        disabled={(!isUnlimited && event.currentTicketsSold >= event.maxCapacity) || bookingEventId === event.id}
+                        className={`border-4 border-zinc-950 font-bold uppercase py-2 px-4 transition-all mt-2 w-full text-sm flex items-center justify-center gap-2 ${
+                          !isUnlimited && event.currentTicketsSold >= event.maxCapacity 
+                            ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' 
+                            : 'bg-zinc-50 text-zinc-950 hover:bg-yellow-400 hover:shadow-neo active:translate-y-1 active:translate-x-1 active:shadow-none'
+                        }`}
+                      >
+                        <Tag className="w-4 h-4" />
+                        {bookingEventId === event.id 
+                          ? 'Emitindo...' 
+                          : (!isUnlimited && event.currentTicketsSold >= event.maxCapacity)
+                            ? 'Esgotado' 
+                            : event.requiresAttachment || event.isPaid 
+                              ? 'Candidatar-se (Anexo / Pago)'
+                              : 'Garantir Ingresso'
+                        }
+                      </button>
+                    )}
+
+                    {/* Admin Tools: Manage Candidates, Edit & TV Mode */}
+                    {userRole !== 'STUDENT' && (
+                      <div className="flex gap-2 border-t-2 border-zinc-800 pt-3 mt-1 flex-wrap">
+                        <button
+                          onClick={() => handleOpenEditModal(event)}
+                          className="bg-zinc-800 text-yellow-400 border-2 border-yellow-400 font-bold uppercase py-1.5 px-2 hover:bg-yellow-400 hover:text-zinc-950 transition-all text-[11px] flex items-center justify-center gap-1"
+                          title="Editar Informações do Evento"
+                        >
+                          <Edit className="w-3.5 h-3.5" /> Editar
+                        </button>
+
+                        <button
+                          onClick={() => setAdminCandidateEvent(event)}
+                          className="flex-1 bg-zinc-800 text-zinc-50 border-2 border-zinc-50 font-bold uppercase py-1.5 px-2 hover:bg-zinc-700 transition-all text-[11px] flex items-center justify-center gap-1"
+                          title="Gerenciar Candidatos e Presenças"
+                        >
+                          <UserCheck className="w-3.5 h-3.5 text-yellow-400" /> Candidatos
+                        </button>
+
+                        {event.requiresAttachment && (
+                          <button
+                            onClick={() => setTvEvent(event)}
+                            className="bg-yellow-400 text-zinc-950 border-2 border-zinc-950 font-bold uppercase py-1.5 px-2 hover:bg-yellow-300 transition-all text-[11px] flex items-center justify-center gap-1"
+                            title="Modo TV / Datashow HDMI"
+                          >
+                            <Tv className="w-3.5 h-3.5" /> Modo TV
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )})}
             </div>

@@ -34,6 +34,7 @@ public class EventService {
         event.setMaxTicketsPerUser(dto.getMaxTicketsPerUser() != null ? dto.getMaxTicketsPerUser() : 1);
         event.setRequiresAttachment(dto.getRequiresAttachment() != null ? dto.getRequiresAttachment() : false);
         event.setAttachmentRequirementsJson(dto.getAttachmentRequirementsJson());
+        event.setBannerUrl(dto.getBannerUrl());
 
         event = eventRepository.save(event);
 
@@ -54,6 +55,7 @@ public class EventService {
         event.setMaxTicketsPerUser(dto.getMaxTicketsPerUser() != null ? dto.getMaxTicketsPerUser() : 1);
         event.setRequiresAttachment(dto.getRequiresAttachment() != null ? dto.getRequiresAttachment() : false);
         event.setAttachmentRequirementsJson(dto.getAttachmentRequirementsJson());
+        event.setBannerUrl(dto.getBannerUrl());
 
         event = eventRepository.save(event);
         return mapToResponse(event);
@@ -78,6 +80,7 @@ public class EventService {
         response.setMaxTicketsPerUser(event.getMaxTicketsPerUser());
         response.setRequiresAttachment(event.getRequiresAttachment());
         response.setAttachmentRequirementsJson(event.getAttachmentRequirementsJson());
+        response.setBannerUrl(event.getBannerUrl());
         return response;
     }
 }

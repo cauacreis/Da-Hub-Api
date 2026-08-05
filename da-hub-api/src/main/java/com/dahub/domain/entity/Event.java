@@ -48,6 +48,9 @@ public class Event {
     @Column(name = "attachment_requirements_json", columnDefinition = "TEXT")
     private String attachmentRequirementsJson;
 
+    @Column(name = "banner_url", columnDefinition = "TEXT")
+    private String bannerUrl;
+
     public Event() {}
 
     public Event(UUID id, String title, String description, String category, LocalDateTime eventDate, Integer maxCapacity, Integer currentTicketsSold, Boolean isPaid, Double price, Integer maxTicketsPerUser, Boolean requiresAttachment, String attachmentRequirementsJson) {
@@ -82,6 +85,9 @@ public class Event {
 
     public String getAttachmentRequirementsJson() { return attachmentRequirementsJson; }
     public void setAttachmentRequirementsJson(String attachmentRequirementsJson) { this.attachmentRequirementsJson = attachmentRequirementsJson; }
+
+    public String getBannerUrl() { return bannerUrl; }
+    public void setBannerUrl(String bannerUrl) { this.bannerUrl = bannerUrl; }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }

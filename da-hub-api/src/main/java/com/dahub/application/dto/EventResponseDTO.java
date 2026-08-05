@@ -19,6 +19,10 @@ public class EventResponseDTO {
     private Integer maxTicketsPerUser;
     private Boolean requiresAttachment;
     private String attachmentRequirementsJson;
+    private String bannerUrl;
+
+    public String getBannerUrl() { return bannerUrl; }
+    public void setBannerUrl(String bannerUrl) { this.bannerUrl = bannerUrl; }
 
     public Boolean getIsPaid() { return isPaid; }
     public void setIsPaid(Boolean isPaid) { this.isPaid = isPaid; }
