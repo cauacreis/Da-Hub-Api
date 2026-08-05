@@ -1,6 +1,5 @@
 package com.dahub.domain.entity;
 
-import com.dahub.domain.entity.enums.EventCategory;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -51,9 +50,15 @@ public class Event {
     @Column(name = "banner_url", columnDefinition = "TEXT")
     private String bannerUrl;
 
+    @Version
+    private Long version;
+
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
+
     public Event() {}
 
-    public Event(UUID id, String title, String description, String category, LocalDateTime eventDate, Integer maxCapacity, Integer currentTicketsSold, Boolean isPaid, Double price, Integer maxTicketsPerUser, Boolean requiresAttachment, String attachmentRequirementsJson) {
+    public Event(UUID id, String title, String description, String category, LocalDateTime eventDate, Integer maxCapacity, Integer currentTicketsSold, Boolean isPaid, Double price, Integer maxTicketsPerUser, Boolean requiresAttachment, String attachmentRequirementsJson, String bannerUrl) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -66,6 +71,7 @@ public class Event {
         this.maxTicketsPerUser = maxTicketsPerUser != null ? maxTicketsPerUser : 1;
         this.requiresAttachment = requiresAttachment != null ? requiresAttachment : false;
         this.attachmentRequirementsJson = attachmentRequirementsJson;
+        this.bannerUrl = bannerUrl;
     }
 
     public String getCategory() { return category; }
@@ -121,7 +127,7 @@ public class Event {
     }
 
     public Event(UUID id, String title, String description, String category, LocalDateTime eventDate, Integer maxCapacity, Integer currentTicketsSold) {
-        this(id, title, description, category, eventDate, maxCapacity, currentTicketsSold, false, 0.0, 1, false, null);
+        this(id, title, description, category, eventDate, maxCapacity, currentTicketsSold, false, 0.0, 1, false, null, null);
     }
 
     public static Builder builder() {
@@ -141,6 +147,7 @@ public class Event {
         private Integer maxTicketsPerUser = 1;
         private Boolean requiresAttachment = false;
         private String attachmentRequirementsJson;
+        private String bannerUrl;
 
         public Builder id(UUID id) { this.id = id; return this; }
         public Builder title(String title) { this.title = title; return this; }
@@ -154,9 +161,10 @@ public class Event {
         public Builder maxTicketsPerUser(Integer maxTicketsPerUser) { this.maxTicketsPerUser = maxTicketsPerUser; return this; }
         public Builder requiresAttachment(Boolean requiresAttachment) { this.requiresAttachment = requiresAttachment; return this; }
         public Builder attachmentRequirementsJson(String attachmentRequirementsJson) { this.attachmentRequirementsJson = attachmentRequirementsJson; return this; }
+        public Builder bannerUrl(String bannerUrl) { this.bannerUrl = bannerUrl; return this; }
 
         public Event build() {
-            return new Event(id, title, description, category, eventDate, maxCapacity, currentTicketsSold, isPaid, price, maxTicketsPerUser, requiresAttachment, attachmentRequirementsJson);
+            return new Event(id, title, description, category, eventDate, maxCapacity, currentTicketsSold, isPaid, price, maxTicketsPerUser, requiresAttachment, attachmentRequirementsJson, bannerUrl);
         }
     }
 }

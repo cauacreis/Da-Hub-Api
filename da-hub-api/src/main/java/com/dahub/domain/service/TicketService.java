@@ -9,6 +9,7 @@ import com.dahub.domain.repository.EventRepository;
 import com.dahub.domain.repository.TicketRepository;
 import com.dahub.domain.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +28,7 @@ public class TicketService {
         this.userRepository = userRepository;
     }
 
+    @Transactional
     public TicketResponseDTO bookTicket(UUID eventId, String userEmail) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
@@ -61,11 +63,15 @@ public class TicketService {
         return mapToDTO(ticket);
     }
 
+    @Transactional
     public TicketResponseDTO bookTicketWithAttachments(UUID eventId, String userEmail, List<org.springframework.web.multipart.MultipartFile> files, List<String> labels, List<String> descriptions, FileUploadService fileUploadService) {
         TicketResponseDTO dto = bookTicket(eventId, userEmail);
         Ticket ticket = ticketRepository.findById(dto.getTicketId()).orElseThrow(() -> new RuntimeException("Ticket not found"));
         
-        if (files != null && labels != null && files.size() == labels.size()) {
+        if (files != null && labels != null && files.size() != labels.size()) {
+            throw new IllegalArgumentException("O número de arquivos e rótulos não corresponde.");
+        }
+        if (files != null && labels != null) {
             for (int i = 0; i < files.size(); i++) {
                 org.springframework.web.multipart.MultipartFile file = files.get(i);
                 String label = labels.get(i);
@@ -97,6 +103,7 @@ public class TicketService {
         return mapToDTO(ticket);
     }
 
+    @Transactional
     public TicketResponseDTO scanTicket(String qrCodeHash) {
         Ticket ticket = ticketRepository.findByQrCodeHash(qrCodeHash)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));
@@ -164,6 +171,7 @@ public class TicketService {
         return tickets.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
+    @Transactional
     public void cancelTicket(UUID ticketId, String userEmail) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));

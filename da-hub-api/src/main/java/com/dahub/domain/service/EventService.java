@@ -7,6 +7,7 @@ import com.dahub.domain.repository.EventRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,6 +21,7 @@ public class EventService {
         this.eventRepository = eventRepository;
     }
 
+    @Transactional
     public EventResponseDTO createEvent(EventCreateDTO dto) {
         Event event = new Event();
         event.setTitle(dto.getTitle());
@@ -41,6 +43,7 @@ public class EventService {
         return mapToResponse(event);
     }
 
+    @Transactional
     public EventResponseDTO updateEvent(java.util.UUID id, EventCreateDTO dto) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Evento não encontrado com ID: " + id));
