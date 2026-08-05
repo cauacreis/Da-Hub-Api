@@ -48,6 +48,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
   
   // Banner state
   const [bannerUrl, setBannerUrl] = useState('');
+  const [bannerLoadError, setBannerLoadError] = useState(false);
   const [isConvertingWebP, setIsConvertingWebP] = useState(false);
   const [webpConversionSuccess, setWebpConversionSuccess] = useState(false);
 
@@ -144,6 +145,10 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
       setAttachments([]);
     }
   }, [eventToEdit, isOpen]);
+
+  useEffect(() => {
+    setBannerLoadError(false);
+  }, [bannerUrl]);
 
   if (!isOpen) return null;
 
@@ -406,13 +411,13 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
             </div>
 
             {/* Pré-visualização da Capa Selecionada */}
-            {bannerUrl && (
+            {bannerUrl && !bannerLoadError && (
               <div className="border-2 border-zinc-50 mt-1 relative overflow-hidden h-36 bg-zinc-950">
                 <img 
                   src={bannerUrl} 
                   alt="Pré-visualização do Banner" 
                   className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                  onError={() => setBannerLoadError(true)}
                 />
                 <span className="absolute bottom-2 right-2 bg-zinc-950 text-yellow-400 text-[10px] font-bold px-2 py-0.5 border border-yellow-400 uppercase">
                   Pré-visualização da Capa
@@ -585,7 +590,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
                   onClick={() => setIsTicketsPerUserUnlimited(true)}
                   className={`flex-1 py-1.5 px-2 font-bold uppercase text-xs border-2 transition-all ${
                     isTicketsPerUserUnlimited 
-                      ? 'bg-zinc-950 text-zinc-400 border-zinc-700'
+                      ? 'bg-yellow-400 text-zinc-950 border-zinc-950 shadow-neo'
                       : 'bg-zinc-950 text-zinc-400 border-zinc-700'
                   }`}
                 >
