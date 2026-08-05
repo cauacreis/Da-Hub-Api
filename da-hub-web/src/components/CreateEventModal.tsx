@@ -46,8 +46,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
   const [eventDateOnly, setEventDateOnly] = useState('');
   const [eventTimeOnly, setEventTimeOnly] = useState('19:00');
   
-  // Banner state & mode (URL or File Upload)
-  const [bannerMode, setBannerMode] = useState<'URL' | 'FILE'>('URL');
+  // Banner state
   const [bannerUrl, setBannerUrl] = useState('');
   const [isConvertingWebP, setIsConvertingWebP] = useState(false);
   const [webpConversionSuccess, setWebpConversionSuccess] = useState(false);
@@ -188,11 +187,11 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
     setWebpConversionSuccess(false);
 
     try {
-      // 1. Converte a imagem (JPG, PNG, GIF, BMP) para WebP no navegador
+      // 1. Converte qualquer arquivo de imagem para .webp no navegador
       const webpBlob = await convertImageToWebP(file);
       const webpFile = new File([webpBlob], 'banner.webp', { type: 'image/webp' });
 
-      // 2. Envia a imagem .webp convertida para a API
+      // 2. Envia a imagem .webp convertida para o backend
       const formData = new FormData();
       formData.append('file', webpFile);
 
@@ -338,101 +337,77 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Banner do Evento (URL ou Upload com Conversor WebP) */}
-          <div className="border-4 border-zinc-800 p-4 bg-zinc-900 flex flex-col gap-3">
-            <div className="flex justify-between items-center border-b-2 border-zinc-800 pb-2">
-              <label className="text-zinc-50 font-bold uppercase text-sm flex items-center gap-2">
-                <Image className="w-5 h-5 text-yellow-400" />
-                Banner / Foto de Capa do Evento
+          {/* Banner do Evento (Upload com Conversão WebP + URL da Imagem) */}
+          <div className="border-4 border-zinc-800 p-4 bg-zinc-900 flex flex-col gap-4">
+            <label className="text-zinc-50 font-bold uppercase text-sm flex items-center gap-2 border-b-2 border-zinc-800 pb-2">
+              <Image className="w-5 h-5 text-yellow-400" />
+              Banner / Foto de Capa do Evento
+            </label>
+
+            {/* Opção 1: Upload de Arquivo Próprio (Com conversão WebP automática) */}
+            <div className="bg-zinc-950 border-2 border-yellow-400 p-3.5 flex flex-col gap-2 shadow-neo">
+              <label className="text-yellow-400 font-bold uppercase text-xs flex items-center gap-1.5">
+                <Upload className="w-4 h-4" />
+                Opção 1: Anexar Seu Próprio Arquivo (Converte para WebP ⚡)
               </label>
 
-              {/* Banner Mode Selector */}
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  onClick={() => setBannerMode('URL')}
-                  className={`py-1 px-3 text-xs font-bold uppercase border-2 transition-all flex items-center gap-1 ${
-                    bannerMode === 'URL'
-                      ? 'bg-yellow-400 text-zinc-950 border-zinc-950 shadow-neo'
-                      : 'bg-zinc-950 text-zinc-400 border-zinc-700'
-                  }`}
-                >
-                  <LinkIcon className="w-3.5 h-3.5" /> Inserir URL
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBannerMode('FILE')}
-                  className={`py-1 px-3 text-xs font-bold uppercase border-2 transition-all flex items-center gap-1 ${
-                    bannerMode === 'FILE'
-                      ? 'bg-yellow-400 text-zinc-950 border-zinc-950 shadow-neo'
-                      : 'bg-zinc-950 text-zinc-400 border-zinc-700'
-                  }`}
-                >
-                  <Upload className="w-3.5 h-3.5" /> Carregar Imagem (WebP)
-                </button>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleBannerFileUpload(e.target.files?.[0] || null)}
+                disabled={isConvertingWebP}
+                className="bg-zinc-900 border-2 border-zinc-50 text-zinc-300 p-2 text-xs font-medium cursor-pointer file:mr-4 file:py-1.5 file:px-3 file:border-2 file:border-zinc-50 file:bg-yellow-400 file:text-zinc-950 file:font-bold file:uppercase hover:file:bg-yellow-300"
+              />
+
+              {isConvertingWebP && (
+                <div className="bg-yellow-400 text-zinc-950 p-2 font-bold uppercase text-xs flex items-center gap-2 animate-pulse border-2 border-zinc-950">
+                  <Sparkles className="w-4 h-4 animate-spin" />
+                  ⚡ Convertendo imagem para formato super leve (.WebP) e salvando...
+                </div>
+              )}
+
+              {webpConversionSuccess && (
+                <div className="bg-green-500 text-zinc-950 p-2 font-bold uppercase text-xs flex items-center gap-1 border-2 border-zinc-950">
+                  <CheckCircle className="w-4 h-4" />
+                  ✓ Sucesso! Imagem convertida para formato otimizado (.WebP) e anexada ao evento!
+                </div>
+              )}
+            </div>
+
+            {/* Opção 2: URL de Imagem da Web ou Sugestões */}
+            <div className="flex flex-col gap-2 pt-1">
+              <label className="text-zinc-300 font-bold uppercase text-xs flex items-center gap-1.5">
+                <LinkIcon className="w-4 h-4 text-zinc-400" />
+                Opção 2: Ou Cole o Link (URL) / Escolha uma Capa Pronta:
+              </label>
+
+              <input
+                type="text"
+                value={bannerUrl}
+                onChange={(e) => { setBannerUrl(e.target.value); setWebpConversionSuccess(false); }}
+                placeholder="https://exemplo.com/minha-foto-banner.jpg"
+                className="bg-zinc-950 border-4 border-zinc-50 text-zinc-50 p-3 outline-none focus:border-yellow-400 font-mono text-xs"
+              />
+
+              {/* Sugestões Rápidas */}
+              <div className="flex flex-wrap gap-2 items-center mt-1">
+                <span className="text-zinc-400 text-[11px] font-bold uppercase">Sugestões Rápidas:</span>
+                {PRESET_BANNERS.map((preset) => (
+                  <button
+                    type="button"
+                    key={preset.name}
+                    onClick={() => { setBannerUrl(preset.url); setWebpConversionSuccess(false); }}
+                    className="bg-zinc-800 text-zinc-300 border border-zinc-500 text-[10px] font-bold px-2 py-1 hover:bg-yellow-400 hover:text-zinc-950 transition-colors uppercase"
+                  >
+                    {preset.name}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {bannerMode === 'URL' ? (
-              <div className="flex flex-col gap-2">
-                <input
-                  type="text"
-                  value={bannerUrl}
-                  onChange={(e) => { setBannerUrl(e.target.value); setWebpConversionSuccess(false); }}
-                  placeholder="https://exemplo.com/minha-foto-banner.jpg"
-                  className="bg-zinc-950 border-4 border-zinc-50 text-zinc-50 p-3 outline-none focus:border-yellow-400 font-mono text-xs"
-                />
-
-                {/* Presets Rápidos */}
-                <div className="flex flex-wrap gap-2 items-center">
-                  <span className="text-zinc-400 text-xs font-bold uppercase">Sugestões de Capa:</span>
-                  {PRESET_BANNERS.map((preset) => (
-                    <button
-                      type="button"
-                      key={preset.name}
-                      onClick={() => { setBannerUrl(preset.url); setWebpConversionSuccess(false); }}
-                      className="bg-zinc-800 text-zinc-300 border border-zinc-500 text-[10px] font-bold px-2 py-1 hover:bg-yellow-400 hover:text-zinc-950 transition-colors uppercase"
-                    >
-                      {preset.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              /* Upload de Imagem com Auto-conversão para WebP */
-              <div className="flex flex-col gap-3 bg-zinc-950 border-2 border-zinc-700 p-4">
-                <div className="flex flex-col gap-1">
-                  <label className="text-zinc-300 font-bold uppercase text-xs">
-                    Selecione uma imagem do seu dispositivo (JPG, PNG, GIF, BMP):
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleBannerFileUpload(e.target.files?.[0] || null)}
-                    disabled={isConvertingWebP}
-                    className="bg-zinc-900 border-2 border-zinc-50 text-zinc-300 p-2 text-xs font-medium cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-2 file:border-zinc-50 file:bg-yellow-400 file:text-zinc-950 file:font-bold file:uppercase hover:file:bg-yellow-300"
-                  />
-                </div>
-
-                {isConvertingWebP && (
-                  <div className="bg-yellow-400 text-zinc-950 p-3 font-bold uppercase text-xs flex items-center gap-2 animate-pulse border-2 border-zinc-950">
-                    <Sparkles className="w-4 h-4 animate-spin" />
-                    ⚡ Convertendo imagem para formato otimizado WebP e salvando...
-                  </div>
-                )}
-
-                {webpConversionSuccess && (
-                  <div className="bg-green-500 text-zinc-950 p-2 font-bold uppercase text-xs flex items-center gap-1 border-2 border-zinc-950">
-                    <CheckCircle className="w-4 h-4" />
-                    ⚡ Imagem convertida para formato super leve (.WebP) com sucesso!
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Banner Preview */}
+            {/* Pré-visualização da Capa Selecionada */}
             {bannerUrl && (
-              <div className="border-2 border-zinc-50 mt-1 relative overflow-hidden h-32 bg-zinc-950">
+              <div className="border-2 border-zinc-50 mt-1 relative overflow-hidden h-36 bg-zinc-950">
                 <img 
                   src={bannerUrl} 
                   alt="Pré-visualização do Banner" 
@@ -610,7 +585,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
                   onClick={() => setIsTicketsPerUserUnlimited(true)}
                   className={`flex-1 py-1.5 px-2 font-bold uppercase text-xs border-2 transition-all ${
                     isTicketsPerUserUnlimited 
-                      ? 'bg-yellow-400 text-zinc-950 border-zinc-950 shadow-neo' 
+                      ? 'bg-zinc-950 text-zinc-400 border-zinc-700'
                       : 'bg-zinc-950 text-zinc-400 border-zinc-700'
                   }`}
                 >
