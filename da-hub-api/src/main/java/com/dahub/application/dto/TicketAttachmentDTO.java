@@ -10,16 +10,18 @@ public class TicketAttachmentDTO {
     private String filePath;
     private String mimeType;
     private Long fileSize;
+    private String description;
 
     public TicketAttachmentDTO() {}
 
-    public TicketAttachmentDTO(UUID id, String requirementLabel, String fileName, String filePath, String mimeType, Long fileSize) {
+    public TicketAttachmentDTO(UUID id, String requirementLabel, String fileName, String filePath, String mimeType, Long fileSize, String description) {
         this.id = id;
         this.requirementLabel = requirementLabel;
         this.fileName = fileName;
         this.filePath = filePath;
         this.mimeType = mimeType;
         this.fileSize = fileSize;
+        this.description = description;
     }
 
     public UUID getId() { return id; }
@@ -39,4 +41,7 @@ public class TicketAttachmentDTO {
 
     public Long getFileSize() { return fileSize; }
     public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 }

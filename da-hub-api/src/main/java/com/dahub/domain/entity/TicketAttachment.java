@@ -31,9 +31,12 @@ public class TicketAttachment {
     @Column(name = "file_size")
     private Long fileSize;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     public TicketAttachment() {}
 
-    public TicketAttachment(UUID id, Ticket ticket, String requirementLabel, String fileName, String filePath, String mimeType, Long fileSize) {
+    public TicketAttachment(UUID id, Ticket ticket, String requirementLabel, String fileName, String filePath, String mimeType, Long fileSize, String description) {
         this.id = id;
         this.ticket = ticket;
         this.requirementLabel = requirementLabel;
@@ -41,6 +44,7 @@ public class TicketAttachment {
         this.filePath = filePath;
         this.mimeType = mimeType;
         this.fileSize = fileSize;
+        this.description = description;
     }
 
     public UUID getId() { return id; }
@@ -63,4 +67,7 @@ public class TicketAttachment {
 
     public Long getFileSize() { return fileSize; }
     public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 }

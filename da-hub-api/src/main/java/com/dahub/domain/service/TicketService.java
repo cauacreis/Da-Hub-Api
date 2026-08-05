@@ -61,7 +61,7 @@ public class TicketService {
         return mapToDTO(ticket);
     }
 
-    public TicketResponseDTO bookTicketWithAttachments(UUID eventId, String userEmail, List<org.springframework.web.multipart.MultipartFile> files, List<String> labels, FileUploadService fileUploadService) {
+    public TicketResponseDTO bookTicketWithAttachments(UUID eventId, String userEmail, List<org.springframework.web.multipart.MultipartFile> files, List<String> labels, List<String> descriptions, FileUploadService fileUploadService) {
         TicketResponseDTO dto = bookTicket(eventId, userEmail);
         Ticket ticket = ticketRepository.findById(dto.getTicketId()).orElseThrow(() -> new RuntimeException("Ticket not found"));
         
@@ -69,6 +69,8 @@ public class TicketService {
             for (int i = 0; i < files.size(); i++) {
                 org.springframework.web.multipart.MultipartFile file = files.get(i);
                 String label = labels.get(i);
+                String desc = (descriptions != null && i < descriptions.size()) ? descriptions.get(i) : null;
+
                 if (file != null && !file.isEmpty()) {
                     String storedPath = fileUploadService.storeFile(file);
                     com.dahub.domain.entity.TicketAttachment attachment = new com.dahub.domain.entity.TicketAttachment();
@@ -78,11 +80,11 @@ public class TicketService {
                     attachment.setFilePath(storedPath);
                     attachment.setMimeType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
                     attachment.setFileSize(file.getSize());
+                    attachment.setDescription(desc);
                     ticket.getAttachments().add(attachment);
                 }
             }
             
-            // Se o evento é pago, define o status como PENDING_PAYMENT
             if (Boolean.TRUE.equals(ticket.getEvent().getIsPaid())) {
                 ticket.setStatus(TicketStatus.PENDING_PAYMENT);
             }
@@ -146,7 +148,8 @@ public class TicketService {
                     att.getFileName(),
                     att.getFilePath(),
                     att.getMimeType(),
-                    att.getFileSize()
+                    att.getFileSize(),
+                    att.getDescription()
                 )
             ).collect(Collectors.toList());
             dto.setAttachments(attDTOs);

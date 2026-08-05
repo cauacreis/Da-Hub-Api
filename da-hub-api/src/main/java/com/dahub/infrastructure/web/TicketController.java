@@ -35,9 +35,10 @@ public class TicketController {
     public ResponseEntity<TicketResponseDTO> bookTicketWithAttachments(
             @PathVariable UUID eventId,
             @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files,
-            @RequestParam(value = "labels", required = false) java.util.List<String> labels) {
+            @RequestParam(value = "labels", required = false) java.util.List<String> labels,
+            @RequestParam(value = "descriptions", required = false) java.util.List<String> descriptions) {
         String userEmail = extractEmailFromPrincipal();
-        TicketResponseDTO ticketResponse = ticketService.bookTicketWithAttachments(eventId, userEmail, files, labels, fileUploadService);
+        TicketResponseDTO ticketResponse = ticketService.bookTicketWithAttachments(eventId, userEmail, files, labels, descriptions, fileUploadService);
         return ResponseEntity.ok(ticketResponse);
     }
 

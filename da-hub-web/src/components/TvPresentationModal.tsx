@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Play, Pause, ChevronLeft, ChevronRight, Maximize, Minimize, Settings, Tv } from 'lucide-react';
+import { X, Play, Pause, ChevronLeft, ChevronRight, Maximize, Minimize, Settings, Tv, Quote } from 'lucide-react';
 import { api } from '../services/api';
 import type { EventData } from '../pages/Dashboard';
 import type { AttachmentItem } from './CandidateAttachmentViewer';
@@ -12,6 +12,7 @@ interface SlideItem {
   fileName: string;
   filePath: string;
   mimeType: string;
+  description?: string;
 }
 
 interface TvPresentationModalProps {
@@ -54,7 +55,8 @@ export function TvPresentationModal({ isOpen, onClose, event }: TvPresentationMo
               requirementLabel: att.requirementLabel,
               fileName: att.fileName,
               filePath: att.filePath,
-              mimeType: att.mimeType
+              mimeType: att.mimeType,
+              description: att.description
             });
           });
         }
@@ -67,7 +69,6 @@ export function TvPresentationModal({ isOpen, onClose, event }: TvPresentationMo
     }
   };
 
-  // Slideshow Timer Loop
   useEffect(() => {
     if (!isPlaying || slides.length <= 1) return;
 
@@ -184,7 +185,7 @@ export function TvPresentationModal({ isOpen, onClose, event }: TvPresentationMo
               onChange={(e) => setShowCandidateInfo(e.target.checked)}
               className="w-4 h-4 accent-yellow-400 cursor-pointer"
             />
-            Exibir Nome e Matrícula na TV
+            Exibir Detalhes e Descrição na TV
           </label>
         </div>
       )}
@@ -218,18 +219,31 @@ export function TvPresentationModal({ isOpen, onClose, event }: TvPresentationMo
               />
             )}
 
-            {/* Candidate Metadata Overlay */}
+            {/* Candidate Metadata & 500-Character Description Overlay */}
             {showCandidateInfo && (
-              <div className="absolute bottom-6 left-6 bg-zinc-950/90 border-4 border-yellow-400 p-4 shadow-neo max-w-lg backdrop-blur-sm">
-                <span className="bg-yellow-400 text-zinc-950 font-bold uppercase text-[10px] px-2 py-0.5 mb-1 inline-block">
+              <div className="absolute bottom-6 left-6 bg-zinc-950/95 border-4 border-yellow-400 p-5 shadow-neo max-w-xl backdrop-blur-md z-10 flex flex-col gap-2">
+                <span className="bg-yellow-400 text-zinc-950 font-bold uppercase text-[10px] px-2 py-0.5 self-start">
                   {currentSlide.requirementLabel}
                 </span>
-                <h2 className="text-2xl font-bold uppercase text-zinc-50 tracking-tighter">
-                  {currentSlide.candidateName}
-                </h2>
-                <p className="text-zinc-300 font-mono text-xs">
-                  MATRÍCULA: {currentSlide.candidateRegistration}
-                </p>
+
+                <div>
+                  <h2 className="text-2xl font-bold uppercase text-zinc-50 tracking-tighter leading-none">
+                    {currentSlide.candidateName}
+                  </h2>
+                  <p className="text-zinc-400 font-mono text-xs mt-1">
+                    MATRÍCULA: {currentSlide.candidateRegistration}
+                  </p>
+                </div>
+
+                {/* 500-Character Description Display on TV */}
+                {currentSlide.description && (
+                  <div className="mt-1 pt-2 border-t-2 border-zinc-800 bg-zinc-900/90 p-3 border-l-4 border-l-yellow-400 flex gap-2">
+                    <Quote className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-zinc-200 text-xs italic font-medium leading-relaxed max-h-32 overflow-y-auto">
+                      "{currentSlide.description}"
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </>

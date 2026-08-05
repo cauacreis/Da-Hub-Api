@@ -7,6 +7,7 @@ export interface AttachmentItem {
   filePath: string;
   mimeType: string;
   fileSize?: number;
+  description?: string;
 }
 
 interface CandidateAttachmentViewerProps {
@@ -78,6 +79,12 @@ export function CandidateAttachmentViewer({ isOpen, onClose, candidateName, atta
                       </div>
                     )}
                   </div>
+
+                  {att.description && (
+                    <div className="bg-zinc-950 border border-zinc-800 p-2 text-xs font-medium text-zinc-300 italic">
+                      "{att.description}"
+                    </div>
+                  )}
 
                   <span className="text-[10px] text-zinc-500 font-mono truncate">{att.fileName}</span>
                 </div>

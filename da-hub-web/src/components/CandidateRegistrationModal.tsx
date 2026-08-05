@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Upload, AlertCircle, CheckCircle, QrCode, CreditCard } from 'lucide-react';
+import { X, Upload, AlertCircle, CheckCircle, QrCode, CreditCard, MessageSquare } from 'lucide-react';
 import { api } from '../services/api';
 import type { EventData, AttachmentRequirement } from '../pages/Dashboard';
 
@@ -12,6 +12,8 @@ interface CandidateRegistrationModalProps {
 
 export function CandidateRegistrationModal({ isOpen, onClose, event, onSuccess }: CandidateRegistrationModalProps) {
   const [selectedFiles, setSelectedFiles] = useState<{ [reqId: string]: File }>({});
+  const [fileDescriptions, setFileDescriptions] = useState<{ [reqId: string]: string }>({});
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -30,13 +32,18 @@ export function CandidateRegistrationModal({ isOpen, onClose, event, onSuccess }
 
   const handleFileChange = (reqId: string, file: File | null) => {
     if (file) {
-      // Basic client-size check: 15MB limit
       if (file.size > 15 * 1024 * 1024) {
         setError('O arquivo selecionado excede o limite máximo de 15MB.');
         return;
       }
       setError('');
       setSelectedFiles(prev => ({ ...prev, [reqId]: file }));
+    }
+  };
+
+  const handleDescriptionChange = (reqId: string, value: string) => {
+    if (value.length <= 500) {
+      setFileDescriptions(prev => ({ ...prev, [reqId]: value }));
     }
   };
 
@@ -61,6 +68,7 @@ export function CandidateRegistrationModal({ isOpen, onClose, event, onSuccess }
         if (file) {
           formData.append('files', file);
           formData.append('labels', req.label);
+          formData.append('descriptions', fileDescriptions[req.id] || '');
         }
       });
 
@@ -70,7 +78,6 @@ export function CandidateRegistrationModal({ isOpen, onClose, event, onSuccess }
 
       const ticket = response.data;
 
-      // If event is paid, generate Mercado Pago preference
       if (event.isPaid) {
         try {
           const prefRes = await api.post(`/payments/preference/${ticket.ticketId}`);
@@ -99,7 +106,6 @@ export function CandidateRegistrationModal({ isOpen, onClose, event, onSuccess }
     if (!paymentData) return;
     setIsLoading(true);
     try {
-      // Extract ticket ID or call approval endpoint
       await api.post(`/payments/${paymentData.ticketId || paymentData.paymentId}/approve`).catch(() => {});
       setSuccess('Pagamento aprovado via Mercado Pago!');
       setTimeout(() => {
@@ -155,31 +161,60 @@ export function CandidateRegistrationModal({ isOpen, onClose, event, onSuccess }
         {!paymentData ? (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {requirements.length > 0 ? (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <p className="text-zinc-300 font-bold uppercase text-xs">
-                  Envie os comprovantes / arquivos solicitados pela organização:
+                  Envie os comprovantes / arquivos e descreva sua submissão:
                 </p>
 
-                {requirements.map((req) => (
-                  <div key={req.id} className="bg-zinc-900 border-2 border-zinc-50 p-4 flex flex-col gap-2">
-                    <label className="text-zinc-50 font-bold uppercase text-sm flex items-center gap-2">
-                      <Upload className="w-4 h-4 text-yellow-400" />
-                      {req.label}
-                      {req.required && <span className="text-red-500 text-xs">*Obrigatório</span>}
-                    </label>
-                    <input
-                      type="file"
-                      onChange={(e) => handleFileChange(req.id, e.target.files?.[0] || null)}
-                      className="bg-zinc-950 border-2 border-zinc-700 text-zinc-300 p-2 text-xs font-medium cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-2 file:border-zinc-50 file:bg-yellow-400 file:text-zinc-950 file:font-bold file:uppercase hover:file:bg-yellow-300"
-                      required={req.required}
-                    />
-                    {selectedFiles[req.id] && (
-                      <span className="text-green-400 text-xs font-bold">
-                        ✓ Selecionado: {selectedFiles[req.id].name} ({(selectedFiles[req.id].size / (1024 * 1024)).toFixed(2)} MB)
-                      </span>
-                    )}
-                  </div>
-                ))}
+                {requirements.map((req) => {
+                  const currentDesc = fileDescriptions[req.id] || '';
+                  return (
+                    <div key={req.id} className="bg-zinc-900 border-2 border-zinc-50 p-4 flex flex-col gap-3">
+                      <label className="text-zinc-50 font-bold uppercase text-sm flex items-center gap-2">
+                        <Upload className="w-4 h-4 text-yellow-400" />
+                        {req.label}
+                        {req.required && <span className="text-red-500 text-xs">*Obrigatório</span>}
+                      </label>
+                      
+                      <input
+                        type="file"
+                        onChange={(e) => handleFileChange(req.id, e.target.files?.[0] || null)}
+                        className="bg-zinc-950 border-2 border-zinc-700 text-zinc-300 p-2 text-xs font-medium cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-2 file:border-zinc-50 file:bg-yellow-400 file:text-zinc-950 file:font-bold file:uppercase hover:file:bg-yellow-300"
+                        required={req.required}
+                      />
+
+                      {selectedFiles[req.id] && (
+                        <span className="text-green-400 text-xs font-bold">
+                          ✓ Selecionado: {selectedFiles[req.id].name} ({(selectedFiles[req.id].size / (1024 * 1024)).toFixed(2)} MB)
+                        </span>
+                      )}
+
+                      {/* Character limited description textarea (up to 500 characters) */}
+                      <div className="flex flex-col gap-1 mt-1 border-t border-zinc-800 pt-2">
+                        <div className="flex justify-between items-center">
+                          <label className="text-yellow-400 font-bold uppercase text-xs flex items-center gap-1">
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            Descrição / Resumo do anexo (até 500 letras):
+                          </label>
+                          <span className={`text-[11px] font-bold ${
+                            currentDesc.length >= 480 ? 'text-red-400' : 'text-zinc-400'
+                          }`}>
+                            {currentDesc.length} / 500
+                          </span>
+                        </div>
+                        
+                        <textarea
+                          maxLength={500}
+                          rows={3}
+                          value={currentDesc}
+                          onChange={(e) => handleDescriptionChange(req.id, e.target.value)}
+                          placeholder="Descreva seu anexo, a história da sua obra de arte, detalhes do arquivo ou justificativa..."
+                          className="bg-zinc-950 border-2 border-zinc-700 text-zinc-50 p-2.5 text-xs font-medium outline-none focus:border-yellow-400 transition-colors resize-none"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-zinc-400 text-sm font-medium">
