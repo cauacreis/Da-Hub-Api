@@ -32,6 +32,7 @@ export function ManageCandidatesModal({ isOpen, onClose, event }: ManageCandidat
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isToggling, setIsToggling] = useState(false);
 
   // Attachment Viewer modal state
   const [selectedCandidateName, setSelectedCandidateName] = useState('');
@@ -41,6 +42,10 @@ export function ManageCandidatesModal({ isOpen, onClose, event }: ManageCandidat
   useEffect(() => {
     if (isOpen && event) {
       fetchTickets();
+    }
+    if (isOpen) {
+      setSearchTerm('');
+      setStatusFilter('ALL');
     }
   }, [isOpen, event]);
 
@@ -61,11 +66,14 @@ export function ManageCandidatesModal({ isOpen, onClose, event }: ManageCandidat
 
   const handleToggleStatus = async (ticketId: string, currentStatus: string) => {
     const nextStatus = currentStatus === 'USED' ? 'PAID' : 'USED';
+    setIsToggling(true);
     try {
       await api.put(`/tickets/${ticketId}/status?status=${nextStatus}`);
       fetchTickets();
     } catch (err: any) {
       setError('Erro ao atualizar presença.');
+    } finally {
+      setIsToggling(false);
     }
   };
 
@@ -264,7 +272,8 @@ export function ManageCandidatesModal({ isOpen, onClose, event }: ManageCandidat
                     <td className="p-3 text-center">
                       <button
                         onClick={() => handleToggleStatus(t.ticketId, t.status)}
-                        className={`font-bold px-3 py-1 text-[10px] uppercase border-2 transition-all active:translate-y-0.5 ${
+                        disabled={isToggling}
+                        className={`font-bold px-3 py-1 text-[10px] uppercase border-2 transition-all active:translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed ${
                           t.status === 'USED'
                             ? 'bg-zinc-800 text-red-400 border-red-400 hover:bg-red-500 hover:text-zinc-50'
                             : 'bg-green-500 text-zinc-950 border-zinc-950 hover:bg-green-400'
