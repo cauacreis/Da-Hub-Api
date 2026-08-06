@@ -23,7 +23,7 @@ public class TicketController {
     }
 
     @PostMapping("/book/{eventId}")
-    @PreAuthorize("hasAnyRole('STUDENT', 'DIRECTOR', 'VP')")
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<TicketResponseDTO> bookTicket(@PathVariable UUID eventId) {
         String userEmail = extractEmailFromPrincipal();
         TicketResponseDTO ticketResponse = ticketService.bookTicket(eventId, userEmail);
@@ -31,7 +31,7 @@ public class TicketController {
     }
 
     @PostMapping(value = "/book-with-attachments/{eventId}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('STUDENT', 'DIRECTOR', 'VP')")
+    @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<TicketResponseDTO> bookTicketWithAttachments(
             @PathVariable UUID eventId,
             @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files,

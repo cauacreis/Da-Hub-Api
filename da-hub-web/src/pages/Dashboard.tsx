@@ -95,7 +95,12 @@ export function Dashboard() {
     navigate('/');
   };
 
-  const handleBookTicketClick = (event: EventData) => {
+  const handleBookTicketClick = async (event: EventData) => {
+    if (userRole !== 'STUDENT') {
+      setError('Administradores não podem se inscrever em eventos. Alterne para uma conta de Aluno.');
+      return;
+    }
+
     if (event.requiresAttachment || event.isPaid) {
       setCandidateRegEvent(event);
     } else {
@@ -280,49 +285,83 @@ export function Dashboard() {
                       </div>
                     </div>
 
-                    {/* Student Ticket Action */}
-                    {myTicket ? (
-                      <div className="flex gap-2 mt-2">
-                        <button 
-                          onClick={() => { setTicketData(myTicket); setIsTicketModalOpen(true); }}
-                          className="flex-1 bg-yellow-400 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-2 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-xs flex items-center justify-center gap-1"
-                        >
-                          <Tag className="w-3 h-3" /> Ver Ingresso
-                        </button>
-                        <button 
-                          onClick={() => handleCancelTicket(myTicket.ticketId)}
-                          disabled={cancellingTicketId === myTicket.ticketId}
-                          className="bg-zinc-950 text-red-500 border-4 border-red-500 font-bold uppercase py-2 px-2 hover:bg-red-500 hover:text-zinc-950 hover:shadow-neo transition-all active:translate-y-1 active:translate-x-1 active:shadow-none text-xs flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Cancelar Inscrição"
-                        >
-                          {cancellingTicketId === myTicket.ticketId ? 'Cancelando...' : 'Cancelar'}
-                        </button>
-                      </div>
+                    {/* Ações de Ingresso / Painel Admin */}
+                    {userRole !== 'STUDENT' ? (
+                      myTicket ? (
+                        <div className="flex gap-2 mt-2">
+                          <button 
+                            onClick={() => { setTicketData(myTicket); setIsTicketModalOpen(true); }}
+                            className="flex-1 bg-yellow-400 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-2 hover:shadow-neo transition-all text-xs flex items-center justify-center gap-1"
+                          >
+                            <Tag className="w-3 h-3" /> Ver Ingresso Exemplo
+                          </button>
+                          <button 
+                            onClick={() => handleCancelTicket(myTicket.ticketId)}
+                            disabled={cancellingTicketId === myTicket.ticketId}
+                            className="bg-zinc-950 text-red-500 border-4 border-red-500 font-bold uppercase py-2 px-2 hover:bg-red-500 hover:text-zinc-950 hover:shadow-neo transition-all text-xs flex items-center justify-center disabled:opacity-50"
+                            title="Cancelar Inscrição"
+                          >
+                            {cancellingTicketId === myTicket.ticketId ? 'Cancelando...' : 'Cancelar'}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="bg-zinc-950 text-zinc-400 border-2 border-yellow-400/50 p-2.5 text-center text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 mt-2">
+                          <UserCheck className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                          Painel Admin: Inscrição exclusiva para Alunos
+                        </div>
+                      )
                     ) : (
-                      <button 
-                        onClick={() => handleBookTicketClick(event)}
-                        disabled={(!isUnlimited && event.currentTicketsSold >= event.maxCapacity) || bookingEventId === event.id}
-                        className={`border-4 border-zinc-950 font-bold uppercase py-2 px-4 transition-all mt-2 w-full text-sm flex items-center justify-center gap-2 ${
-                          !isUnlimited && event.currentTicketsSold >= event.maxCapacity 
-                            ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' 
-                            : 'bg-zinc-50 text-zinc-950 hover:bg-yellow-400 hover:shadow-neo active:translate-y-1 active:translate-x-1 active:shadow-none'
-                        }`}
-                      >
-                        <Tag className="w-4 h-4" />
-                        {bookingEventId === event.id 
-                          ? 'Emitindo...' 
-                          : (!isUnlimited && event.currentTicketsSold >= event.maxCapacity)
-                            ? 'Esgotado' 
-                            : event.requiresAttachment || event.isPaid 
-                              ? 'Candidatar-se (Anexo / Pago)'
-                              : 'Garantir Ingresso'
-                        }
-                      </button>
+                      myTicket ? (
+                        <div className="flex gap-2 mt-2">
+                          <button 
+                            onClick={() => { setTicketData(myTicket); setIsTicketModalOpen(true); }}
+                            className="flex-1 bg-yellow-400 text-zinc-950 border-4 border-zinc-950 font-bold uppercase py-2 px-2 hover:shadow-neo transition-all text-xs flex items-center justify-center gap-1"
+                          >
+                            <Tag className="w-3 h-3" /> Ver Ingresso
+                          </button>
+                          <button 
+                            onClick={() => handleCancelTicket(myTicket.ticketId)}
+                            disabled={cancellingTicketId === myTicket.ticketId}
+                            className="bg-zinc-950 text-red-500 border-4 border-red-500 font-bold uppercase py-2 px-2 hover:bg-red-500 hover:text-zinc-950 hover:shadow-neo transition-all text-xs flex items-center justify-center disabled:opacity-50"
+                            title="Cancelar Inscrição"
+                          >
+                            {cancellingTicketId === myTicket.ticketId ? 'Cancelando...' : 'Cancelar'}
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => handleBookTicketClick(event)}
+                          disabled={(!isUnlimited && event.currentTicketsSold >= event.maxCapacity) || bookingEventId === event.id}
+                          className={`border-4 border-zinc-950 font-bold uppercase py-2 px-4 transition-all mt-2 w-full text-sm flex items-center justify-center gap-2 ${
+                            !isUnlimited && event.currentTicketsSold >= event.maxCapacity 
+                              ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' 
+                              : 'bg-zinc-50 text-zinc-950 hover:bg-yellow-400 hover:shadow-neo active:translate-y-1 active:translate-x-1 active:shadow-none'
+                          }`}
+                        >
+                          <Tag className="w-4 h-4" />
+                          {bookingEventId === event.id 
+                            ? 'Emitindo...' 
+                            : (!isUnlimited && event.currentTicketsSold >= event.maxCapacity)
+                              ? 'Esgotado' 
+                              : event.requiresAttachment || event.isPaid 
+                                ? 'Candidatar-se (Anexo / Pago)'
+                                : 'Garantir Ingresso'
+                          }
+                        </button>
+                      )
                     )}
 
-                    {/* Admin Tools: Manage Candidates, Edit & TV Mode */}
+                    {/* Ferramentas de Admin: Editar, Candidatos e Modo TV HDMI */}
                     {userRole !== 'STUDENT' && (
                       <div className="flex gap-2 border-t-2 border-zinc-800 pt-3 mt-1 flex-wrap">
+                        <button
+                          onClick={() => setTvEvent(event)}
+                          className="bg-yellow-400 text-zinc-950 border-2 border-zinc-950 font-black uppercase py-1.5 px-3 hover:bg-yellow-300 transition-all text-[11px] flex items-center justify-center gap-1.5 shadow-neo"
+                          title="Transmitir Modo TV / Datashow HDMI"
+                        >
+                          <Tv className="w-3.5 h-3.5 stroke-[2.5]" /> 📺 MODO TV
+                        </button>
+
                         <button
                           onClick={() => handleOpenEditModal(event)}
                           className="bg-zinc-800 text-yellow-400 border-2 border-yellow-400 font-bold uppercase py-1.5 px-2 hover:bg-yellow-400 hover:text-zinc-950 transition-all text-[11px] flex items-center justify-center gap-1"
@@ -338,16 +377,6 @@ export function Dashboard() {
                         >
                           <UserCheck className="w-3.5 h-3.5 text-yellow-400" /> Candidatos
                         </button>
-
-                        {event.requiresAttachment && (
-                          <button
-                            onClick={() => setTvEvent(event)}
-                            className="bg-yellow-400 text-zinc-950 border-2 border-zinc-950 font-bold uppercase py-1.5 px-2 hover:bg-yellow-300 transition-all text-[11px] flex items-center justify-center gap-1"
-                            title="Modo TV / Datashow HDMI"
-                          >
-                            <Tv className="w-3.5 h-3.5" /> Modo TV
-                          </button>
-                        )}
                       </div>
                     )}
                   </div>

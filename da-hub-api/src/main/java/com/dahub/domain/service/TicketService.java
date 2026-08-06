@@ -40,6 +40,10 @@ public class TicketService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (user.getRole() == com.dahub.domain.entity.enums.Role.DIRECTOR || user.getRole() == com.dahub.domain.entity.enums.Role.VP) {
+            throw new IllegalArgumentException("Administradores não podem se inscrever em eventos.");
+        }
+
         boolean alreadyBooked = ticketRepository.existsByEventIdAndUserEmailAndStatusIn(
                 eventId, userEmail, List.of(TicketStatus.PAID, TicketStatus.USED)
         );
