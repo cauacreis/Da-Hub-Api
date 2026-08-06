@@ -1,11 +1,16 @@
 package com.dahub.infrastructure.config;
 
 import com.dahub.domain.entity.User;
+import com.dahub.domain.entity.enums.Role;
 import com.dahub.domain.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+/**
+ * Inicializa dados padrões (como as contas de teste de Diretoria e Aluno)
+ * se o banco de dados estiver vazio ao iniciar o servidor na nuvem ou em dev.
+ */
 @Component
 public class DataInitializer implements CommandLineRunner {
 
@@ -20,28 +25,31 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if (userRepository.count() == 0) {
-            // Cria um usuário da Diretoria (VP)
-            User diretor = new User();
-            diretor.setName("Membro da Diretoria");
-            diretor.setEmail("diretoria@dahub.dev");
-            diretor.setPassword(passwordEncoder.encode("admin"));
-            diretor.setRegistrationNumber("00000");
-            diretor.setRole(com.dahub.domain.entity.enums.Role.VP);
-            userRepository.save(diretor);
+            // 1. Conta do Administrador / Diretoria
+            User admin = new User(
+                    null,
+                    "Diretoria DA Hub",
+                    "diretoria@dahub.dev",
+                    "1001",
+                    passwordEncoder.encode("admin"),
+                    Role.DIRECTOR
+            );
+            userRepository.save(admin);
 
-            // Cria um usuário Aluno Padrão (STUDENT)
-            User aluno = new User();
-            aluno.setName("Aluno Padrão");
-            aluno.setEmail("aluno@dahub.dev");
-            aluno.setPassword(passwordEncoder.encode("123"));
-            aluno.setRegistrationNumber("55555");
-            aluno.setRole(com.dahub.domain.entity.enums.Role.STUDENT);
-            userRepository.save(aluno);
+            // 2. Conta do Aluno / Usuário Comum
+            User student = new User(
+                    null,
+                    "Aluno de Teste",
+                    "aluno@dahub.dev",
+                    "2001",
+                    passwordEncoder.encode("123"),
+                    Role.STUDENT
+            );
+            userRepository.save(student);
 
-            System.out.println("====== USUÁRIOS DE TESTE CRIADOS ======");
-            System.out.println("Diretoria -> Email: diretoria@dahub.dev | Senha: admin");
-            System.out.println("Aluno     -> Email: aluno@dahub.dev | Senha: 123");
-            System.out.println("=======================================");
+            System.out.println("✅ [DA Hub] Contas padrão inicializadas no banco de dados:");
+            System.out.println("   -> Diretoria: diretoria@dahub.dev | Senha: admin");
+            System.out.println("   -> Aluno:     aluno@dahub.dev     | Senha: 123");
         }
     }
 }
