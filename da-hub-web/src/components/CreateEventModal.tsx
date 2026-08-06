@@ -209,13 +209,11 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
         }
       }
 
-      // 2. Envia a imagem para o backend
+      // 2. Envia a imagem para o backend (o Axios define a boundary do FormData automaticamente)
       const formData = new FormData();
       formData.append('file', webpFile);
 
-      const response = await api.post('/files/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = await api.post('/files/upload', formData);
 
       let uploadedUrl = response.data.url;
       if (uploadedUrl && !uploadedUrl.startsWith('http')) {
@@ -226,7 +224,8 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
       setWebpConversionSuccess(true);
     } catch (err: any) {
       console.error("Erro ao enviar imagem de banner", err);
-      setError('Erro ao enviar a imagem. Certifique-se de escolher um arquivo de imagem válido.');
+      const apiErrorMsg = err.response?.data || err.message;
+      setError(typeof apiErrorMsg === 'string' ? apiErrorMsg : 'Erro ao enviar a imagem. Certifique-se de escolher um arquivo de imagem válido.');
     } finally {
       setIsConvertingWebP(false);
     }

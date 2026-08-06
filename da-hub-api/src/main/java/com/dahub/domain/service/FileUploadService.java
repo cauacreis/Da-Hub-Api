@@ -46,11 +46,25 @@ public class FileUploadService {
         }
 
         String contentType = file.getContentType();
+        String originalFilename = file.getOriginalFilename();
+
+        if (contentType == null || contentType.equalsIgnoreCase("application/octet-stream")) {
+            if (originalFilename != null) {
+                String lower = originalFilename.toLowerCase();
+                if (lower.endsWith(".png")) contentType = "image/png";
+                else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) contentType = "image/jpeg";
+                else if (lower.endsWith(".webp")) contentType = "image/webp";
+                else if (lower.endsWith(".pdf")) contentType = "application/pdf";
+                else if (lower.endsWith(".mp4")) contentType = "video/mp4";
+                else if (lower.endsWith(".mp3")) contentType = "audio/mpeg";
+                else if (lower.endsWith(".wav")) contentType = "audio/wav";
+            }
+        }
+
         if (contentType == null || !ALLOWED_MIME_TYPES.contains(contentType.toLowerCase())) {
             throw new IllegalArgumentException("Tipo de arquivo não permitido: " + contentType + ". Tipos aceitos: JPG, PNG, WEBP, PDF, MP4, MP3, WAV.");
         }
 
-        String originalFilename = file.getOriginalFilename();
         String fileExtension = "";
         if (originalFilename != null && originalFilename.contains(".")) {
             fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();

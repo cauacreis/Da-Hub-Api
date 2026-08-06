@@ -83,9 +83,7 @@ export function CandidateRegistrationModal({ isOpen, onClose, event, onSuccess }
         }
       });
 
-      const response = await api.post(`/tickets/book-with-attachments/${event.id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = await api.post(`/tickets/book-with-attachments/${event.id}`, formData);
 
       const ticket = response.data;
 
