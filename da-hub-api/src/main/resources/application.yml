@@ -1,5 +1,5 @@
 jwt:
-  secret: aVeryLongSecretKeyThatNeedsToBeAtLeast32BytesLongToWorkWithJjwt
+  secret: ${JWT_SECRET:aVeryLongSecretKeyThatNeedsToBeAtLeast32BytesLongToWorkWithJjwt}
   expiration: 7200000
 
 spring:
@@ -10,7 +10,7 @@ spring:
     url: jdbc:h2:mem:dahub;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
-    password: 
+    password:
 
   jpa:
     hibernate:
@@ -19,7 +19,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.H2Dialect
+
   h2:
     console:
       enabled: true

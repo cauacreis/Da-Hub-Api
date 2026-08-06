@@ -1,0 +1,35 @@
+# Perfil de Produção — Render + Neon.tech PostgreSQL
+# As variáveis abaixo são injetadas pelo painel do Render (Environment Variables)
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 7200000
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    driver-class-name: org.postgresql.Driver
+    username: ${SPRING_DATASOURCE_USERNAME:}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+
+  h2:
+    console:
+      enabled: false
+
+server:
+  port: ${PORT:8080}
+
+logging:
+  level:
+    com.dahub: INFO
+    org.hibernate.SQL: WARN
+    org.springframework.security: WARN
