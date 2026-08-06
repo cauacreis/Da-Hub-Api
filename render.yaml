@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: da-hub-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: JWT_SECRET
+        value: aVeryLongSecretKeyThatNeedsToBeAtLeast32BytesLongToWorkWithJjwt
