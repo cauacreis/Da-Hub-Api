@@ -4,7 +4,10 @@ export const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  return `http://${window.location.hostname}:8080/api`;
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return `http://${window.location.hostname}:8080/api`;
+  }
+  return 'https://da-hub-api.onrender.com/api';
 };
 
 export const getFileBaseUrl = () => {
