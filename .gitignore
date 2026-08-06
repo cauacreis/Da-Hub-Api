@@ -1,23 +1,34 @@
 # ===========================
-# DA Hub API — .gitignore
+# DA Hub — .gitignore Completo
 # ===========================
 
-# Maven
+# Maven & Build Java
 target/
 *.class
 *.jar
 *.war
+.mvn/wrapper/maven-wrapper.jar
 
-# IDE
+# Frontend React / Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# IDE & SO
 .idea/
 *.iml
 .vscode/
-*.DS_Store
+.DS_Store
+Thumbs.db
 
-# Spring Boot
+# Uploads de Teste & Logs
+uploads/
+da-hub-api/uploads/
 *.log
 logs/
 
-# Ambiente
+# Variáveis de Ambiente & Segredos
 .env
-*.local
+.env.production
+.env.local

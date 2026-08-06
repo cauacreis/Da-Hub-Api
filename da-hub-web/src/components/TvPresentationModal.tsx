@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Play, Pause, ChevronLeft, ChevronRight, Maximize, Minimize, Settings, Tv, Quote } from 'lucide-react';
-import { api } from '../services/api';
+import { api, formatFileUrl } from '../services/api';
 import type { EventData } from '../pages/Dashboard';
 import type { AttachmentItem } from './CandidateAttachmentViewer';
 
@@ -94,10 +94,7 @@ export function TvPresentationModal({ isOpen, onClose, event }: TvPresentationMo
 
   const currentSlide = slides[currentIndex];
 
-  const getFullUrl = (filePath: string) => {
-    if (filePath.startsWith('http')) return filePath;
-    return `http://${window.location.hostname}:8080${filePath}`;
-  };
+  const getFullUrl = formatFileUrl;
 
   return (
     <div 

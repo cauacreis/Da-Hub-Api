@@ -1,4 +1,5 @@
 import { X, FileText, Download } from 'lucide-react';
+import { formatFileUrl } from '../services/api';
 
 export interface AttachmentItem {
   id: string;
@@ -20,10 +21,7 @@ interface CandidateAttachmentViewerProps {
 export function CandidateAttachmentViewer({ isOpen, onClose, candidateName, attachments }: CandidateAttachmentViewerProps) {
   if (!isOpen) return null;
 
-  const getFullUrl = (filePath: string) => {
-    if (filePath.startsWith('http')) return filePath;
-    return `http://${window.location.hostname}:8080${filePath}`;
-  };
+  const getFullUrl = formatFileUrl;
 
   return (
     <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50 backdrop-blur-sm">

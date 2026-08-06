@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Calendar, Clock, Image as ImageIcon, Link as LinkIcon, Upload, CheckCircle, AlertCircle, Sparkles, Crop } from 'lucide-react';
-import { api } from '../services/api';
+import { api, formatFileUrl } from '../services/api';
 import { ImageEditorModal } from './ImageEditorModal';
 import type { EventData } from '../pages/Dashboard';
 
@@ -172,11 +172,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
 
       const response = await api.post('/files/upload', formData);
 
-      let uploadedUrl = response.data.url;
-      if (uploadedUrl && !uploadedUrl.startsWith('http')) {
-        uploadedUrl = `http://${window.location.hostname}:8080${uploadedUrl}`;
-      }
-
+      const uploadedUrl = formatFileUrl(response.data.url);
       setBannerUrl(uploadedUrl);
       setWebpConversionSuccess(true);
     } catch (err: any) {
@@ -252,11 +248,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
 
       const response = await api.post('/files/upload', formData);
 
-      let uploadedUrl = response.data.url;
-      if (uploadedUrl && !uploadedUrl.startsWith('http')) {
-        uploadedUrl = `http://${window.location.hostname}:8080${uploadedUrl}`;
-      }
-
+      const uploadedUrl = formatFileUrl(response.data.url);
       setBannerUrl(uploadedUrl);
       setWebpConversionSuccess(true);
     } catch (err: any) {
