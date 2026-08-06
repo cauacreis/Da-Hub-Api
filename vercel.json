@@ -1,0 +1,10 @@
+{
+  "buildCommand": "cd da-hub-web && npm install && npm run build",
+  "outputDirectory": "da-hub-web/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
