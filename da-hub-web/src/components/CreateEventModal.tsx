@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X, AlertCircle, CheckCircle, Plus, Trash2, Image, Calendar, Clock, Upload, Sparkles, Link as LinkIcon } from 'lucide-react';
+import { X, Plus, Trash2, Calendar, Clock, Image as ImageIcon, Link as LinkIcon, Upload, CheckCircle, AlertCircle, Sparkles, Crop } from 'lucide-react';
 import { api } from '../services/api';
+import { ImageEditorModal } from './ImageEditorModal';
 import type { EventData } from '../pages/Dashboard';
 
 interface AttachmentReq {
@@ -146,9 +147,45 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
     }
   }, [eventToEdit, isOpen]);
 
+  // Estados do Editor de Imagem (Corte, Filtros e Proporção)
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editorImageSrc, setEditorImageSrc] = useState<string | null>(null);
+
   useEffect(() => {
     setBannerLoadError(false);
   }, [bannerUrl]);
+
+  const openImageEditor = (src: string) => {
+    setEditorImageSrc(src);
+    setIsEditorOpen(true);
+  };
+
+  const handleSavedEditedImage = async (editedBlob: Blob) => {
+    setIsConvertingWebP(true);
+    setWebpConversionSuccess(false);
+    setError('');
+
+    try {
+      const webpFile = new File([editedBlob], `banner_${Date.now()}.webp`, { type: 'image/webp' });
+      const formData = new FormData();
+      formData.append('file', webpFile);
+
+      const response = await api.post('/files/upload', formData);
+
+      let uploadedUrl = response.data.url;
+      if (uploadedUrl && !uploadedUrl.startsWith('http')) {
+        uploadedUrl = `http://${window.location.hostname}:8080${uploadedUrl}`;
+      }
+
+      setBannerUrl(uploadedUrl);
+      setWebpConversionSuccess(true);
+    } catch (err: any) {
+      console.error("Erro ao enviar imagem editada", err);
+      setError('Erro ao salvar imagem editada. Tente novamente.');
+    } finally {
+      setIsConvertingWebP(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -357,7 +394,7 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
           {/* Banner do Evento (Upload com Conversão WebP + URL da Imagem) */}
           <div className="border-4 border-zinc-800 p-4 bg-zinc-900 flex flex-col gap-4">
             <label className="text-zinc-50 font-bold uppercase text-sm flex items-center gap-2 border-b-2 border-zinc-800 pb-2">
-              <Image className="w-5 h-5 text-yellow-400" />
+              <ImageIcon className="w-5 h-5 text-yellow-400" />
               Banner / Foto de Capa do Evento
             </label>
 
@@ -424,15 +461,25 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
 
             {/* Pré-visualização da Capa Selecionada */}
             {bannerUrl && !bannerLoadError && (
-              <div className="border-2 border-zinc-50 mt-1 relative overflow-hidden h-36 bg-zinc-950">
+              <div className="border-4 border-zinc-50 mt-1 relative overflow-hidden h-44 bg-zinc-950 group">
                 <img 
                   src={bannerUrl} 
                   alt="Pré-visualização do Banner" 
                   className="w-full h-full object-cover"
                   onError={() => setBannerLoadError(true)}
                 />
-                <span className="absolute bottom-2 right-2 bg-zinc-950 text-yellow-400 text-[10px] font-bold px-2 py-0.5 border border-yellow-400 uppercase">
-                  Pré-visualização da Capa
+                
+                {/* Botão para Abrir Editor de Imagem / Filtros / Corte */}
+                <button
+                  type="button"
+                  onClick={() => openImageEditor(bannerUrl)}
+                  className="absolute top-3 right-3 bg-yellow-400 text-zinc-950 font-black text-xs px-3 py-2 border-2 border-zinc-950 shadow-neo flex items-center gap-1.5 hover:bg-yellow-300 transition-all uppercase"
+                >
+                  <Crop className="w-4 h-4" /> 🎨 Ajustar Proporção & Filtros
+                </button>
+
+                <span className="absolute bottom-2 left-2 bg-zinc-950/90 text-yellow-400 text-[10px] font-bold px-2 py-0.5 border border-yellow-400 uppercase">
+                  Pré-visualização da Capa do Evento
                 </span>
               </div>
             )}
@@ -728,6 +775,14 @@ export function CreateEventModal({ isOpen, onClose, onSuccess, eventToEdit }: Cr
           </button>
         </form>
       </div>
+
+      {/* Modal Interativo de Edição de Imagem, Filtros & Proporção */}
+      <ImageEditorModal
+        isOpen={isEditorOpen}
+        imageSrc={editorImageSrc}
+        onClose={() => setIsEditorOpen(false)}
+        onSave={handleSavedEditedImage}
+      />
     </div>
   );
 }
